@@ -46,15 +46,15 @@ def on_audio_selected(selected_row, evt: gr.SelectData):
         if evt and evt.index:
             selected_row_index = evt.index[0]  # Obtener el índice de la fila seleccionada
             audio_path = selected_row["Path"][selected_row_index]  # Asumiendo que la columna 1 contiene la ruta del archivo
-        
+            species_name = selected_row["Specie"][selected_row_index]  # Obtener el nombre de la especie de la fila seleccionada
             # audio_path = selected_row["Path"][0]  # Asumiendo que "Path" es la columna que contiene la ruta del archivo
-            return update_output(audio_path)
-    return None, None
+            return update_output(audio_path, species_name)
+    return None, None, "Specie"
 
 # Paso 4: Asegurarse de que update_output maneje un path de archivo como entrada
-def update_output(audio_clip_path):
+def update_output(audio_clip_path, species_name):
     mel_spectrogram_image = audio_to_mel_spectrogram(audio_clip_path)
-    return mel_spectrogram_image, audio_clip_path
+    return mel_spectrogram_image, audio_clip_path, species_name
 
 def list_audio_files_from_zip(zip_path):
     audio_files = []
@@ -96,7 +96,7 @@ def on_browse(data_type):
     if data_type == "Files":
         filenames = filedialog.askopenfilenames()
         if filenames:
-            audio_file_list = pd.DataFrame([{"File": os.path.basename(f), "Path": f} for f in filenames])
+            audio_file_list = pd.DataFrame([{"Specie": f.split("/")[-2], "File": os.path.basename(f), "Path": f} for f in filenames])
             root_dir_audio_files = os.path.dirname(filenames[0])
             root.destroy()
             return audio_file_list.to_string(index=False), audio_file_list
@@ -107,8 +107,8 @@ def on_browse(data_type):
         folder_path = filedialog.askdirectory()
         # Asumiendo que tienes una función que lista los archivos en el directorio y subdirectorios
         if folder_path:
-            audio_files = list_audio_files_from_folder(folder_path)  # Esta función debe estar definida en alguna parte de tu código
-            audio_file_list = pd.DataFrame([{"File": os.path.basename(f), "Path": f} for f in audio_files])
+            filenames = list_audio_files_from_folder(folder_path)  # Esta función debe estar definida en alguna parte de tu código
+            audio_file_list = pd.DataFrame([{"Specie": f.split("/")[-2], "File": os.path.basename(f), "Path": f} for f in filenames])
             root_dir_audio_files = folder_path
             root.destroy()
             return audio_file_list.to_string(index=False), audio_file_list
@@ -129,7 +129,7 @@ def main():
     with gr.Blocks() as demo:
         with gr.Row():
             with gr.Column():
-                audio_file_table = gr.Dataframe(headers=["File", "Path"], type="pandas", interactive=False)
+                audio_file_table = gr.Dataframe(headers=["File"], type="pandas", interactive=False)
                 data_type = gr.Radio(choices=["Files", "Folder"], value="Folder", label="Upload Audio Files")
                 input_path = gr.Textbox(label="Path of audios", scale=3, interactive=False)
                 browse_btn = gr.Button("Browse", min_width=1)
@@ -138,9 +138,13 @@ def main():
                 # Define audio_input and mel_spectrogram_output before using them in audio_file_table.select
                 audio_input = gr.Audio(label="Upload Audio Clip", type="filepath")
                 mel_spectrogram_output = gr.Image(label="Mel Spectrogram")
+                with gr.Row():
+                    species_button = gr.Button("Specie", variant="primary", )  # Botón verde, el texto se actualizará dinámicamente
+                    unknown_button = gr.Button("Unknown", variant="secondary")  # Botón naranja
+                    other_button = gr.Button("Other", variant="stop")  # Botón rojo
                 browse_btn.click(on_browse, inputs=data_type, outputs=[input_path, audio_file_table])
                 # Now audio_input and mel_spectrogram_output are defined before being used here
-                audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input])
+                audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button])
 
     return demo
 
