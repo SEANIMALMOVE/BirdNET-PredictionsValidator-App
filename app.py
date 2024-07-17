@@ -1,16 +1,25 @@
+# Web App
 from tkinter import Tk, filedialog
 import gradio as gr
+import tkinter as tk
+
+# Audio processing
 import librosa
 import librosa.display
+
+# Data processing
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from io import BytesIO
-from PIL import Image
-import os
 import zipfile
 import tempfile
-import tkinter as tk
+
+# Image processing
+import matplotlib.pyplot as plt
+from PIL import Image
+
+# File handling
+from io import BytesIO
+import os
 
 global root_dir_audio_files
 root_dir_audio_files = ""
@@ -32,15 +41,20 @@ def audio_to_mel_spectrogram(audio_clip):
     image = Image.open(buf)
     return image
 
-def update_output(audio_clip):
-    if isinstance(audio_clip, list):
-        # Process each file individually
-        # For demonstration, let's just process the first file
-        audio_clip = audio_clip[0]
+def on_audio_selected(selected_row, evt: gr.SelectData):
+    if not selected_row.empty:
+        if evt and evt.index:
+            selected_row_index = evt.index[0]  # Obtener el índice de la fila seleccionada
+            audio_path = selected_row["Path"][selected_row_index]  # Asumiendo que la columna 1 contiene la ruta del archivo
+        
+            # audio_path = selected_row["Path"][0]  # Asumiendo que "Path" es la columna que contiene la ruta del archivo
+            return update_output(audio_path)
+    return None, None
 
-    mel_spectrogram_image = audio_to_mel_spectrogram(audio_clip)
-
-    return mel_spectrogram_image, audio_clip
+# Paso 4: Asegurarse de que update_output maneje un path de archivo como entrada
+def update_output(audio_clip_path):
+    mel_spectrogram_image = audio_to_mel_spectrogram(audio_clip_path)
+    return mel_spectrogram_image, audio_clip_path
 
 def list_audio_files_from_zip(zip_path):
     audio_files = []
@@ -85,10 +99,10 @@ def on_browse(data_type):
             audio_file_list = pd.DataFrame([{"File": os.path.basename(f), "Path": f} for f in filenames])
             root_dir_audio_files = os.path.dirname(filenames[0])
             root.destroy()
-            return audio_file_list.to_string(index=False), "Root path: " + root_dir_audio_files, audio_file_list
+            return audio_file_list.to_string(index=False), audio_file_list
         else:
             root.destroy()
-            return "Files not selected", "Root path: ", pd.DataFrame()
+            return "Files not selected", pd.DataFrame()
     elif data_type == "Folder":
         folder_path = filedialog.askdirectory()
         # Asumiendo que tienes una función que lista los archivos en el directorio y subdirectorios
@@ -97,16 +111,16 @@ def on_browse(data_type):
             audio_file_list = pd.DataFrame([{"File": os.path.basename(f), "Path": f} for f in audio_files])
             root_dir_audio_files = folder_path
             root.destroy()
-            return audio_file_list.to_string(index=False), "Root path: " + root_dir_audio_files, audio_file_list
+            return audio_file_list.to_string(index=False), audio_file_list
         else:
             root.destroy()
-            return "Folder not selected", "Root path: ", pd.DataFrame()
+            return "Folder not selected", pd.DataFrame()
     else:
         root.destroy()
-        return "Please select an upload option", "Root path: ", pd.DataFrame()
+        return "Please select an upload option", pd.DataFrame()
 
 # Use a gr.Label to display the root path
-root_path_label = gr.Label()
+# root_path_label = gr.Label()
 
 # Use a gr.Dataframe or gr.Dynamic for audio file selection
 audio_file_table = gr.Dataframe()
@@ -115,39 +129,20 @@ def main():
     with gr.Blocks() as demo:
         with gr.Row():
             with gr.Column():
+                audio_file_table = gr.Dataframe(headers=["File", "Path"], type="pandas", interactive=False)
                 data_type = gr.Radio(choices=["Files", "Folder"], value="Folder", label="Upload Audio Files")
                 input_path = gr.Textbox(label="Path of audios", scale=3, interactive=False)
                 browse_btn = gr.Button("Browse", min_width=1)
-                root_path_label = gr.Label("Root path: ")
-                audio_file_table = gr.Dataframe(headers=["File", "Path"], type="pandas")
-                browse_btn.click(on_browse, inputs=data_type, outputs=[input_path, root_path_label, audio_file_table])
+                # root_path_label = gr.Label("Root path: ")
             with gr.Column():
+                # Define audio_input and mel_spectrogram_output before using them in audio_file_table.select
                 audio_input = gr.Audio(label="Upload Audio Clip", type="filepath")
                 mel_spectrogram_output = gr.Image(label="Mel Spectrogram")
-                # Asegúrate de ajustar esta parte según lo que necesites hacer con el audio seleccionado
-                audio_input.change(fn=update_output, inputs=audio_input, outputs=[mel_spectrogram_output, audio_input])
+                browse_btn.click(on_browse, inputs=data_type, outputs=[input_path, audio_file_table])
+                # Now audio_input and mel_spectrogram_output are defined before being used here
+                audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input])
+
     return demo
 
 demo = main()
 demo.launch(inbrowser=True)
-
-
-'''def main():
-    with gr.Blocks() as demo:
-        with gr.Row():
-            with gr.Column():
-                data_type = gr.Radio(choices=["Files", "Folder"], value="Files", label="Offline data type")
-                input_path = gr.Textbox(label="Select Multiple videos", scale=5, interactive=False)
-                image_browse_btn = gr.Button("Browse", min_width=1)
-                image_browse_btn.click(on_browse, inputs=data_type, outputs=input_path, show_progress="hidden")
-
-                audio_input = gr.Audio(label="Upload Audio Clip", type="filepath")
-                mel_spectrogram_output = gr.Image(label="Mel Spectrogram")
-                # Conectar la entrada de audio con la función update_output
-                audio_input.change(fn=update_output, inputs=audio_input, outputs=[mel_spectrogram_output, audio_input])
-            with gr.Column():
-                # zip_input = gr.File(label="Upload Zip File")
-                audio_list = gr.Radio(label="Select Audio File")
-                # Conectar la selección del archivo zip con la función on_zip_selected
-                # zip_input.change(fn=on_zip_selected, inputs=zip_input, outputs=[audio_list, audio_input])
-    return demo'''
