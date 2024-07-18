@@ -48,33 +48,13 @@ def on_audio_selected(selected_row, evt: gr.SelectData):
             audio_path = selected_row["Path"][selected_row_index]  # Asumiendo que la columna 1 contiene la ruta del archivo
             species_name = selected_row["Specie"][selected_row_index]  # Obtener el nombre de la especie de la fila seleccionada
             # audio_path = selected_row["Path"][0]  # Asumiendo que "Path" es la columna que contiene la ruta del archivo
-            return update_output(audio_path, species_name)
-    return None, None, "Specie"
+            mel_spectrogram_image = update_output(audio_path)
+            return mel_spectrogram_image, audio_path, species_name, selected_row_index
+    return None, None, "Specie", -1
 
-# Paso 4: Asegurarse de que update_output maneje un path de archivo como entrada
-def update_output(audio_clip_path, species_name):
+def update_output(audio_clip_path):
     mel_spectrogram_image = audio_to_mel_spectrogram(audio_clip_path)
-    return mel_spectrogram_image, audio_clip_path, species_name
-
-def list_audio_files_from_zip(zip_path):
-    audio_files = []
-    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        temp_dir = tempfile.mkdtemp()
-        zip_ref.extractall(temp_dir)
-        # Recorrer el directorio temporal y sus subdirectorios
-        for root, dirs, files in os.walk(temp_dir):
-            for file in files:
-                if file.endswith(('.mp3', '.wav', ".WAV", ".MP3")):
-                    # Asegurarse de que la ruta del archivo se construya correctamente
-                    full_path = os.path.join(root, file)
-                    audio_files.append(full_path)
-    return audio_files
-
-def on_zip_selected(zip_file):
-    if not zip_file.name.endswith('.zip'):
-        return ["Please upload a .zip file"], None
-    audio_files = list_audio_files_from_zip(zip_file)
-    return audio_files, audio_files[0] if audio_files else "No audio files found"
+    return mel_spectrogram_image
 
 def list_audio_files_from_folder(folder_path):
     audio_files = []
@@ -90,13 +70,14 @@ def list_audio_files_from_folder(folder_path):
 def on_browse(data_type):
     global root_dir_audio_files
     global audio_file_list
+
     root = Tk()
     root.attributes("-topmost", True)
     root.withdraw()
     if data_type == "Files":
         filenames = filedialog.askopenfilenames()
         if filenames:
-            audio_file_list = pd.DataFrame([{"Specie": f.split("/")[-2], "File": os.path.basename(f), "Path": f} for f in filenames])
+            audio_file_list = pd.DataFrame([{"Specie": f.split("/")[-2], "File": os.path.basename(f), "Validation": -1, "Path": f} for f in filenames])
             root_dir_audio_files = os.path.dirname(filenames[0])
             root.destroy()
             return audio_file_list.to_string(index=False), audio_file_list
@@ -108,7 +89,7 @@ def on_browse(data_type):
         # Asumiendo que tienes una función que lista los archivos en el directorio y subdirectorios
         if folder_path:
             filenames = list_audio_files_from_folder(folder_path)  # Esta función debe estar definida en alguna parte de tu código
-            audio_file_list = pd.DataFrame([{"Specie": f.split("/")[-2], "File": os.path.basename(f), "Path": f} for f in filenames])
+            audio_file_list = pd.DataFrame([{"Specie": f.split("/")[-2], "File": os.path.basename(f),"Validation": -1, "Path": f} for f in filenames])
             root_dir_audio_files = folder_path
             root.destroy()
             return audio_file_list.to_string(index=False), audio_file_list
@@ -118,6 +99,32 @@ def on_browse(data_type):
     else:
         root.destroy()
         return "Please select an upload option", pd.DataFrame()
+    
+
+# Buttons
+def update_validation(audio_table, row_index, new_value):
+    if 0 <= row_index < len(audio_table):
+        # Change value of the row row index, column validation to newvalue
+        # print row_index value
+        audio_table.at[row_index, "Validation"] = new_value
+        # audio_file_table.update(audio_table)  # Asumiendo que df es el DataFrame que alimenta audio_file_table
+        # Style df, if Validation = 1, set row color to green, if Validation = 0, set row color to red, if Validation = -1, set row color to orange
+        # audio_table.style(audio_table, row_styles=[{"color": "green" if v == 1 else "red" if v == 0 else "orange"} for v in audio_table["Validation"]])
+
+    return audio_table
+
+def on_species_button_clicked(audio_table, selected_row_index):
+    audio_table = update_validation(audio_table, selected_row_index, 1)  # Actualiza a 1 para 'Specie'
+    return audio_table
+
+def on_unknown_button_clicked(audio_table, selected_row_index):
+    audio_table = update_validation(audio_table, selected_row_index, -1)  # Actualiza a -1 para 'Unknown'
+    return audio_table
+
+def on_other_button_clicked(audio_table, selected_row_index):
+    audio_table = update_validation(audio_table, selected_row_index, 0)  # Actualiza a 0 para 'Other'
+    return audio_table
+
 
 # Use a gr.Label to display the root path
 # root_path_label = gr.Label()
@@ -125,8 +132,11 @@ def on_browse(data_type):
 # Use a gr.Dataframe or gr.Dynamic for audio file selection
 audio_file_table = gr.Dataframe()
 
+# selected_row_index = gr.Number(visible=False)  # Usamos gr.Number pero lo hacemos invisible
+
 def main():
     with gr.Blocks() as demo:
+        selected_row_index = gr.Number(visible=False)
         with gr.Row():
             with gr.Column():
                 audio_file_table = gr.Dataframe(headers=["File"], type="pandas", interactive=False)
@@ -144,8 +154,11 @@ def main():
                     other_button = gr.Button("Other", variant="stop")  # Botón rojo
                 browse_btn.click(on_browse, inputs=data_type, outputs=[input_path, audio_file_table])
                 # Now audio_input and mel_spectrogram_output are defined before being used here
-                audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button])
-
+                audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button, selected_row_index])
+                species_button.click(on_species_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
+                unknown_button.click(on_unknown_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
+                other_button.click(on_other_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
+                
     return demo
 
 demo = main()
