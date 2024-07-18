@@ -125,6 +125,15 @@ def on_other_button_clicked(audio_table, selected_row_index):
     audio_table = update_validation(audio_table, selected_row_index, 0)  # Actualiza a 0 para 'Other'
     return audio_table
 
+def save_table(audio_table):
+    # Save the table to a csv file
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_file = os.path.join(temp_dir, "audio_table.csv")
+        # Save all columns but Path
+        audio_table_to_save = audio_table.drop(columns=["Path"])
+        audio_table_to_save.to_csv(temp_file, index=False)
+    return "Table saved successfully"
+
 
 # Use a gr.Label to display the root path
 # root_path_label = gr.Label()
@@ -152,13 +161,14 @@ def main():
                     species_button = gr.Button("Specie", variant="primary", )  # Botón verde, el texto se actualizará dinámicamente
                     unknown_button = gr.Button("Unknown", variant="secondary")  # Botón naranja
                     other_button = gr.Button("Other", variant="stop")  # Botón rojo
+                # save_table = gr.Button("Save Table", variant="primary")
                 browse_btn.click(on_browse, inputs=data_type, outputs=[input_path, audio_file_table])
                 # Now audio_input and mel_spectrogram_output are defined before being used here
                 audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button, selected_row_index])
                 species_button.click(on_species_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
                 unknown_button.click(on_unknown_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
                 other_button.click(on_other_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
-                
+                # save_table.click(save_table, inputs=audio_file_table)
     return demo
 
 demo = main()
