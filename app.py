@@ -148,6 +148,35 @@ audio_file_table = gr.Dataframe()
 
 # selected_row_index = gr.Number(visible=False)  # Usamos gr.Number pero lo hacemos invisible
 
+def load_csv_and_copy_validation(audio_table):
+    root = Tk()
+    root.attributes("-topmost", True)
+    root.withdraw()  # Hide the root window
+    file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
+    if file_path:
+        df = pd.read_csv(file_path)
+        # Map per File from audio table and df and change Validation value to df value
+        audio_table["Validation"] = df["File"].map(df.set_index("File")["Validation"])
+
+        def style_row(row):
+            # Check the Validation value and apply color styling to the entire row
+            if row["Validation"] == 1:
+                return ['background-color: #63C132'] * len(row)  # Green for Validation = 1
+            # elif row["Validation"] == -1:
+            #     return ['background-color: #FFA500'] * len(row)  # Orange for Validation = -1
+            elif row["Validation"] == 0:
+                return ['background-color: #B02E0C'] * len(row)  # Red for Validation = 0
+            else:
+                return [''] * len(row)  # Default, no styling
+
+        audio_table = audio_table.style.apply(style_row, axis=1)
+
+        root.destroy()
+        return audio_table, "Validation Values Loaded"  # Devuelve el DataFrame de Pandas con los valores de validación
+    else:
+        root.destroy()
+        return pd.DataFrame(), "ERROR: No Validation File"  # Devuelve un DataFrame vacío si se cancela la operación
+
 def save_table_to_csv(audio_table):
     root = Tk()
     root.attributes("-topmost", True)
@@ -162,6 +191,10 @@ def save_table_to_csv(audio_table):
     else:
         root.destroy()
         return "Save operation cancelled"
+    
+def update_table_with_validation(audio_table):
+    validation_df, msg = load_csv_and_copy_validation(audio_table)
+    return validation_df, msg
 
 def main():
     with gr.Blocks() as demo:
@@ -182,15 +215,19 @@ def main():
                     unknown_button = gr.Button("Unknown", variant="secondary")  # Botón naranja
                     other_button = gr.Button("Other", variant="stop")  # Botón rojo
                 save_table_btn = gr.Button("Save Table")
-                save_status = gr.Label()  # To display the status of the save operation
+                load_csv_btn = gr.Button("Load CSV and Copy Validation")
+                csv_status = gr.Label()  # To display the status of the save operation
+                
                 browse_btn.click(on_browse, inputs=data_type, outputs=[input_path, audio_file_table])
-                # Now audio_input and mel_spectrogram_output are defined before being used here
                 audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button, selected_row_index])
                 species_button.click(on_species_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
                 unknown_button.click(on_unknown_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
                 other_button.click(on_other_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
-                save_table_btn.click(fn=save_table_to_csv, inputs=audio_file_table, outputs=save_status)
+                save_table_btn.click(fn=save_table_to_csv, inputs=audio_file_table, outputs=csv_status)
+                load_csv_btn.click(fn=update_table_with_validation, inputs=audio_file_table, outputs=[audio_file_table, csv_status])
     return demo
+
+
 
 demo = main()
 demo.launch(inbrowser=True)
