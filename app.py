@@ -108,8 +108,22 @@ def update_validation(audio_table, row_index, new_value):
         # print row_index value
         audio_table.at[row_index, "Validation"] = new_value
         # audio_file_table.update(audio_table)  # Asumiendo que df es el DataFrame que alimenta audio_file_table
-        # Style df, if Validation = 1, set row color to green, if Validation = 0, set row color to red, if Validation = -1, set row color to orange
-        # audio_table.style(audio_table, row_styles=[{"color": "green" if v == 1 else "red" if v == 0 else "orange"} for v in audio_table["Validation"]])
+
+        # audio_table = audio_table.style.applymap(lambda x: '' if x == -1 else ('background-color: #00FF00' if x == 1 else 'background-color: #FF0000'), subset=["Validation"])
+        
+        def style_row(row):
+            # Check the Validation value and apply color styling to the entire row
+            if row["Validation"] == 1:
+                return ['background-color: #63C132'] * len(row)  # Green for Validation = 1
+            # elif row["Validation"] == -1:
+            #     return ['background-color: #FFA500'] * len(row)  # Orange for Validation = -1
+            elif row["Validation"] == 0:
+                return ['background-color: #B02E0C'] * len(row)  # Red for Validation = 0
+            else:
+                return [''] * len(row)  # Default, no styling
+
+        audio_table = audio_table.style.apply(style_row, axis=1)
+
 
     return audio_table
 
