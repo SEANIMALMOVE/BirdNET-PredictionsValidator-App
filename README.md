@@ -63,8 +63,17 @@ python app.py
 ### How to Use
 
 1. **Select Audios Folder**: Choose the folder containing the audio files.
+
+![Load Audio Files](assets/Docs/Images/load_audio_files.png)
+
 2. **Visualize and Play Audio**: View and listen to the audio segments.
+
+![Visualize and Play Audio](assets/Docs/Images/visualize_segments.png)
+
 3. **Validate Predictions**: Mark the prediction as correct or incorrect.
+
+![Validate Predictions](assets/Docs/Images/validate.png)
+
 4. **Download CSV**: Export the validation results as a CSV file for further analysis.
 
 ## Contributing
