@@ -9,6 +9,8 @@ BirdNET Predictions Validator App is a Gradio-based Python application designed 
 - **Prediction Validation**: Mark predictions as accurate or inaccurate.
 - **CSV Export**: Export validation results to a CSV file for further analysis.
 - **User-Friendly Interface**: Intuitive and easy-to-use interface powered by Gradio.
+- **Multi-Species Support**: Handle multiple species folders simultaneously.
+- **Real-Time Feedback**: Immediate validation feedback for each audio segment.
 
 ## Getting Started
 
@@ -37,7 +39,8 @@ pip install -r requirements.txt
 ### Usage
 
 1. Prepare your audio files in the following format:
-```
+
+```python
 root_folder/
 ├── Specie1/
 │ ├── audio1.wav
@@ -47,7 +50,6 @@ root_folder/
 │ └── audio2.WAV
 ...
 ```
-
 
 2. Run the application:
 
@@ -60,7 +62,7 @@ python app.py
 
 ### How to Use
 
-1. **Select Specie Folder**: Choose the folder containing the audio files for a specific bird species.
+1. **Select Audios Folder**: Choose the folder containing the audio files.
 2. **Visualize and Play Audio**: View and listen to the audio segments.
 3. **Validate Predictions**: Mark the prediction as correct or incorrect.
 4. **Download CSV**: Export the validation results as a CSV file for further analysis.

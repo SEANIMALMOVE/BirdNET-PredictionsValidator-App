@@ -27,6 +27,15 @@ global audio_file_list
 audio_file_list = []
 
 def audio_to_mel_spectrogram(audio_clip):
+    """
+    Convert an audio clip to a mel spectrogram image.
+
+    Parameters:
+    audio_clip (str): The path to the audio clip file.
+
+    Returns:
+    PIL.Image.Image: The mel spectrogram image.
+    """
     y, sr = librosa.load(audio_clip, sr=None)
     fmin = 1
     fmax = 32000
@@ -42,12 +51,30 @@ def audio_to_mel_spectrogram(audio_clip):
     return image
 
 def on_audio_selected(selected_row, evt: gr.SelectData):
+    """
+    Process the selected audio and return relevant information.
+
+    Args:
+        selected_row (pandas.DataFrame): The selected row containing audio information.
+        evt (gr.SelectData): The event object containing additional information.
+
+    Returns:
+        tuple: A tuple containing the following information:
+            - mel_spectrogram_image (numpy.ndarray): The mel spectrogram image of the selected audio.
+            - audio_path (str): The path of the selected audio file.
+            - species_name (str): The name of the species associated with the selected audio.
+            - selected_row_index (int): The index of the selected row.
+            - sample_audio (str): The path of a sample audio file for the selected species.
+            - sample_image (numpy.ndarray): The mel spectrogram image of the sample audio file.
+
+            If no audio is selected or an error occurs, the tuple will contain None values.
+    """
     if not selected_row.empty:
         if evt and evt.index:
-            selected_row_index = evt.index[0]  # Obtener el índice de la fila seleccionada
-            audio_path = selected_row["Path"][selected_row_index]  # Asumiendo que la columna 1 contiene la ruta del archivo
-            species_name = selected_row["Specie"][selected_row_index]  # Obtener el nombre de la especie de la fila seleccionada
-            # audio_path = selected_row["Path"][0]  # Asumiendo que "Path" es la columna que contiene la ruta del archivo
+            selected_row_index = evt.index[0]
+            audio_path = selected_row["Path"][selected_row_index]
+            species_name = selected_row["Specie"][selected_row_index] 
+            # audio_path = selected_row["Path"][0] 
             mel_spectrogram_image = update_output(audio_path)
             sample_audio_path = "Bird Vocalization Samples/" + species_name
             sample_audio_files = list_audio_files_from_folder(sample_audio_path)
@@ -55,30 +82,59 @@ def on_audio_selected(selected_row, evt: gr.SelectData):
                 sample_audio = sample_audio_files[0]
                 sample_image = update_output(sample_audio)
             else:
-                # Handle case where no audio files are found
                 sample_audio = None
-                sample_image = None  # Consider providing a default image here
+                sample_image = None
                 print("No audio files found for the selected species")
 
             return mel_spectrogram_image, audio_path, species_name, selected_row_index, sample_audio, sample_image
     return None, None, "Specie", -1, None, None
 
 def update_output(audio_clip_path):
+    """
+    Update the output by converting an audio clip to a mel spectrogram image.
+
+    Parameters:
+    audio_clip_path (str): The path to the audio clip file.
+
+    Returns:
+    mel_spectrogram_image: The mel spectrogram image generated from the audio clip.
+    """
     mel_spectrogram_image = audio_to_mel_spectrogram(audio_clip_path)
     return mel_spectrogram_image
 
 def list_audio_files_from_folder(folder_path):
+    """
+    Lists all audio files (with extensions .mp3, .wav, .WAV, .MP3) in the given folder and its subfolders.
+
+    Args:
+        folder_path (str): The path to the folder to search for audio files.
+
+    Returns:
+        list: A list of full paths to the audio files found.
+    """
     audio_files = []
-    # Recorrer el directorio y sus subdirectorios
+    # Walk through the folder and subfolders and list all audio files
     for root, dirs, files in os.walk(folder_path):
         for file in files:
             if file.endswith(('.mp3', '.wav', ".WAV", ".MP3")):
-                # Asegurarse de que la ruta del archivo se construya correctamente
                 full_path = os.path.join(root, file)
                 audio_files.append(full_path)
     return audio_files
 
 def on_browse(data_type):
+    """
+    Opens a file dialog to browse and select audio files or folders.
+
+    Parameters:
+    - data_type (str): The type of data to browse. Can be "Files" or "Folder".
+
+    Returns:
+    - tuple: A tuple containing a string message and a pandas DataFrame.
+        - The string message indicates the result of the browse operation.
+        - The pandas DataFrame contains information about the selected audio files.
+
+    """
+
     global root_dir_audio_files
     global audio_file_list
 
@@ -88,7 +144,7 @@ def on_browse(data_type):
     if data_type == "Files":
         filenames = filedialog.askopenfilenames()
         if filenames:
-            audio_file_list = pd.DataFrame([{"Specie": f.split("/")[-2], "File": os.path.basename(f), "Validation": -1, "Path": f} for f in filenames])
+            audio_file_list = pd.DataFrame([{"Specie": f.split("/")[-2], "File": os.path.basename(f), "Validation": -1, "Alternative": " ", "Path": f} for f in filenames])
             root_dir_audio_files = os.path.dirname(filenames[0])
             root.destroy()
             return audio_file_list.to_string(index=False), audio_file_list
@@ -97,9 +153,8 @@ def on_browse(data_type):
             return "Files not selected", pd.DataFrame()
     elif data_type == "Folder":
         folder_path = filedialog.askdirectory()
-        # Asumiendo que tienes una función que lista los archivos en el directorio y subdirectorios
         if folder_path:
-            filenames = list_audio_files_from_folder(folder_path)  # Esta función debe estar definida en alguna parte de tu código
+            filenames = list_audio_files_from_folder(folder_path)
             audio_file_list = pd.DataFrame([{"Specie": f.split("/")[-2], "File": os.path.basename(f),"Validation": -1, "Path": f} for f in filenames])
             root_dir_audio_files = folder_path
             root.destroy()
@@ -113,15 +168,25 @@ def on_browse(data_type):
     
 
 # Buttons
-def update_validation(audio_table, row_index, new_value):
+def update_validation(audio_table, row_index, new_value, suggestedSpecie=None):
+    """
+    Update the validation status of an audio in the audio_table.
+
+    Args:
+        audio_table (pandas.DataFrame): The table containing the audio data.
+        row_index (int): The index of the row to update.
+        new_value (int): The new validation status to assign to the audio.
+        suggestedSpecie (str, optional): The suggested species for the audio. Defaults to None.
+
+    Returns:
+        pandas.DataFrame: The updated audio_table with the validation status and suggested species updated.
+
+    """
     if 0 <= row_index < len(audio_table):
         # Change value of the row row index, column validation to newvalue
-        # print row_index value
         audio_table.at[row_index, "Validation"] = new_value
-        # audio_file_table.update(audio_table)  # Asumiendo que df es el DataFrame que alimenta audio_file_table
+        audio_table.at[row_index, "Alternative"] = suggestedSpecie
 
-        # audio_table = audio_table.style.applymap(lambda x: '' if x == -1 else ('background-color: #00FF00' if x == 1 else 'background-color: #FF0000'), subset=["Validation"])
-        
         def style_row(row):
             # Check the Validation value and apply color styling to the entire row
             if row["Validation"] == 1:
@@ -129,37 +194,87 @@ def update_validation(audio_table, row_index, new_value):
             # elif row["Validation"] == -1:
             #     return ['background-color: #FFA500'] * len(row)  # Orange for Validation = -1
             elif row["Validation"] == 0:
+                if row["Alternative"]:
+                    return ['background-color: #FFA500'] * len(row)
                 return ['background-color: #B02E0C'] * len(row)  # Red for Validation = 0
             else:
                 return [''] * len(row)  # Default, no styling
 
         audio_table = audio_table.style.apply(style_row, axis=1)
 
-
     return audio_table
 
 def on_species_button_clicked(audio_table, selected_row_index):
-    audio_table = update_validation(audio_table, selected_row_index, 1)  # Actualiza a 1 para 'Specie'
+    """
+    Update the validation of the audio table for the selected row index to 1 for 'Specie'.
+
+    Args:
+        audio_table (list): The audio table to be updated.
+        selected_row_index (int): The index of the selected row.
+
+    Returns:
+        list: The updated audio table.
+    """
+    audio_table = update_validation(audio_table, selected_row_index, 1)  # Update to 1 for 'Specie'
     return audio_table
 
 def on_unknown_button_clicked(audio_table, selected_row_index):
-    audio_table = update_validation(audio_table, selected_row_index, -1)  # Actualiza a -1 para 'Unknown'
+    """
+    Updates the validation status of the selected audio in the audio table to 'Unknown' (-1).
+
+    Args:
+        audio_table (list): The audio table containing the audio data.
+        selected_row_index (int): The index of the selected row in the audio table.
+
+    Returns:
+        list: The updated audio table with the validation status of the selected audio set to 'Unknown' (-1).
+    """
+    audio_table = update_validation(audio_table, selected_row_index, -1)  # Update to -1 for 'Unknown'
     return audio_table
 
 def on_other_button_clicked(audio_table, selected_row_index):
-    audio_table = update_validation(audio_table, selected_row_index, 0)  # Actualiza a 0 para 'Other'
+    """
+    Updates the audio_table by setting the validation status of the selected row to 0 (Other).
+
+    Parameters:
+    audio_table (list): The list of audio data.
+    selected_row_index (int): The index of the selected row.
+
+    Returns:
+    list: The updated audio_table with the validation status of the selected row set to 0.
+    """
+    audio_table = update_validation(audio_table, selected_row_index, 0)  # Update to 0 for 'Other'
     return audio_table
 
+def suggestedSpecie_button_clicked(audio_table, selected_row_index, suggestedSpecie):
+    """
+    Updates the audio table with the suggested species for the selected row.
 
-# Use a gr.Label to display the root path
-# root_path_label = gr.Label()
+    Parameters:
+    audio_table (list): The audio table containing the audio data.
+    selected_row_index (int): The index of the selected row in the audio table.
+    suggestedSpecie (str): The suggested species for the selected row.
+
+    Returns:
+    list: The updated audio table with the suggested species updated for the selected row.
+    """
+    audio_table = update_validation(audio_table, selected_row_index, 0, suggestedSpecie)  # Update to 0 for 'Other'
+    return audio_table
 
 # Use a gr.Dataframe or gr.Dynamic for audio file selection
 audio_file_table = gr.Dataframe()
 
-# selected_row_index = gr.Number(visible=False)  # Usamos gr.Number pero lo hacemos invisible
-
 def load_csv_and_copy_validation(audio_table):
+    """
+    Loads a CSV file, maps the validation values to the audio table, and applies color styling to the table rows based on the validation values.
+
+    Parameters:
+    - audio_table (DataFrame): The audio table to be updated.
+
+    Returns:
+    - audio_table (DataFrame): The updated audio table with validation values and color styling applied.
+    - message (str): A message indicating the result of the operation.
+    """
     root = Tk()
     root.attributes("-topmost", True)
     root.withdraw()  # Hide the root window
@@ -168,6 +283,7 @@ def load_csv_and_copy_validation(audio_table):
         df = pd.read_csv(file_path)
         # Map per File from audio table and df and change Validation value to df value
         audio_table["Validation"] = df["File"].map(df.set_index("File")["Validation"])
+        audio_table["Alternative"] = df["File"].map(df.set_index("File")["Alternative"])
 
         def style_row(row):
             # Check the Validation value and apply color styling to the entire row
@@ -176,6 +292,8 @@ def load_csv_and_copy_validation(audio_table):
             # elif row["Validation"] == -1:
             #     return ['background-color: #FFA500'] * len(row)  # Orange for Validation = -1
             elif row["Validation"] == 0:
+                if row["Alternative"] is not None:
+                    return ['background-color: #FFA500'] * len(row) # Orange for Alternative
                 return ['background-color: #B02E0C'] * len(row)  # Red for Validation = 0
             else:
                 return [''] * len(row)  # Default, no styling
@@ -189,6 +307,16 @@ def load_csv_and_copy_validation(audio_table):
         return pd.DataFrame(), "ERROR: No Validation File"  # Devuelve un DataFrame vacío si se cancela la operación
 
 def save_table_to_csv(audio_table):
+    """
+    Saves the given audio table to a CSV file.
+
+    Parameters:
+    audio_table (pandas.DataFrame): The audio table to be saved.
+
+    Returns:
+    str: A message indicating the status of the save operation.
+    """
+
     root = Tk()
     root.attributes("-topmost", True)
     root.withdraw()  # Hide the root window
@@ -204,30 +332,44 @@ def save_table_to_csv(audio_table):
         return "Save operation cancelled"
     
 def update_table_with_validation(audio_table):
+    """
+    Update the audio table with validation data.
+
+    Parameters:
+    audio_table (str): The path to the audio table.
+
+    Returns:
+    validation_df (pandas.DataFrame): The validation data loaded from the CSV file.
+    msg (str): A message indicating the status of the operation.
+    """
     validation_df, msg = load_csv_and_copy_validation(audio_table)
     return validation_df, msg
 
-
 def main():
-    sample_audio = gr.Audio(label = "Sample Audio per specie", type="filepath")
+    """
+    This function sets up the main user interface for the Label Audios App.
+    It creates various UI elements such as audio and image components, data tables, and buttons.
+    The function also defines event handlers for user interactions with the UI elements.
+    
+    Returns:
+        gr.Blocks: The main UI component.
+    """
+    sample_audio = gr.Audio(label="Sample Audio per specie", type="filepath")
     sample_image = gr.Image("Sample Mel Spectrogram")
+    audio_file_table = gr.Dataframe(headers=["File"], type="pandas", interactive=False)
     with gr.Blocks() as demo:
         selected_row_index = gr.Number(visible=False)
         with gr.Tab("Load Audios"):
             gr.Markdown("## Load Audio Files")
-            # audio_file_table = gr.Dataframe(headers=["File"], type="pandas", interactive=False)
             data_type = gr.Radio(choices=["Files", "Folder"], value="Folder", label="Upload Audio Files")
             input_path = gr.Textbox(label="Path of audios", scale=3, interactive=False)
             browse_btn = gr.Button("Browse", min_width=1)
+            browse_btn.click(on_browse, inputs=data_type, outputs=[input_path, audio_file_table])
         with gr.Tab("Validate BirdNET predictions"):
             with gr.Row():
                 with gr.Column():
                     gr.Markdown("## Audio Files")
-                    audio_file_table = gr.Dataframe(headers=["File"], type="pandas", interactive=False)
-                    # data_type = gr.Radio(choices=["Files", "Folder"], value="Folder", label="Upload Audio Files")
-                    # input_path = gr.Textbox(label="Path of audios", scale=3, interactive=False)
-                    # browse_btn = gr.Button("Browse", min_width=1)
-                    # root_path_label = gr.Label("Root path: ")
+                    audio_file_table.render()
                     save_table_btn = gr.Button("Save Table", variant="primary")
                     load_csv_btn = gr.Button("Load CSV and Copy Validation", variant="primary")
                     csv_status = gr.Label(value="No Validation Saved or Loaded")  # To display the status of the save operation
@@ -238,17 +380,22 @@ def main():
                     audio_input = gr.Audio(label="Audio", type="filepath")
                     mel_spectrogram_output = gr.Image(label="Mel Spectrogram")
 
+                    # Specie Validation Buttons
                     with gr.Row():
                         species_button = gr.Button("Specie", variant="primary", size="sm")  # Botón verde, el texto se actualizará dinámicamente
                         other_button = gr.Button("Other", variant="stop", size="sm")  # Botón rojo
-                        unknown_button = gr.Button("Unknown", variant="secondary", size="sm")  # Botón naranja
+                    
+                    unknown_button = gr.Button("Unknown", variant="secondary", size="sm")  # Botón naranja  
+                    with gr.Row():
+                        suggestedSpecie_text = gr.Textbox(label="Suggested Specie")
+                        suggestedSpecie_button = gr.Button("Suggested Specie", variant="primary", size="sm")
                         
-                    browse_btn.click(on_browse, inputs=data_type, outputs=[input_path, audio_file_table])
-                    audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button, selected_row_index, sample_audio, sample_image]) # TODO: Add here as outputt the sample stuff so it will be updated to audio and image
+                    audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button, selected_row_index, sample_audio, sample_image])
                     
                     species_button.click(on_species_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
                     unknown_button.click(on_unknown_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
                     other_button.click(on_other_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
+                    suggestedSpecie_button.click(suggestedSpecie_button_clicked, inputs=[audio_file_table, selected_row_index, suggestedSpecie_text], outputs=audio_file_table)
                     
                     save_table_btn.click(fn=save_table_to_csv, inputs=audio_file_table, outputs=csv_status)
                     load_csv_btn.click(fn=update_table_with_validation, inputs=audio_file_table, outputs=[audio_file_table, csv_status])
@@ -257,9 +404,9 @@ def main():
                     gr.Markdown("## Sample Audio & Spectrogram")
                     sample_audio.render()
                     sample_image.render()
+        with gr.Tab("Tutorial"):
+            gr.Textbox("This is a tutorial tab", type="text", value="This is a tutorial tab")
     return demo
-
-# TODO: Meter nombre de especie que sabemos que es, poner en Validation 0, e incluír campo Alternative con el nombre protencial
 
 demo = main()
 demo.launch(inbrowser=True)
