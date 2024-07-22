@@ -49,8 +49,19 @@ def on_audio_selected(selected_row, evt: gr.SelectData):
             species_name = selected_row["Specie"][selected_row_index]  # Obtener el nombre de la especie de la fila seleccionada
             # audio_path = selected_row["Path"][0]  # Asumiendo que "Path" es la columna que contiene la ruta del archivo
             mel_spectrogram_image = update_output(audio_path)
-            return mel_spectrogram_image, audio_path, species_name, selected_row_index
-    return None, None, "Specie", -1
+            sample_audio_path = "Bird Vocalization Samples/" + species_name
+            sample_audio_files = list_audio_files_from_folder(sample_audio_path)
+            if sample_audio_files:
+                sample_audio = sample_audio_files[0]
+                sample_image = update_output(sample_audio)
+            else:
+                # Handle case where no audio files are found
+                sample_audio = None
+                sample_image = None  # Consider providing a default image here
+                print("No audio files found for the selected species")
+
+            return mel_spectrogram_image, audio_path, species_name, selected_row_index, sample_audio, sample_image
+    return None, None, "Specie", -1, None, None
 
 def update_output(audio_clip_path):
     mel_spectrogram_image = audio_to_mel_spectrogram(audio_clip_path)
@@ -196,38 +207,59 @@ def update_table_with_validation(audio_table):
     validation_df, msg = load_csv_and_copy_validation(audio_table)
     return validation_df, msg
 
+
 def main():
+    sample_audio = gr.Audio(label = "Sample Audio per specie", type="filepath")
+    sample_image = gr.Image("Sample Mel Spectrogram")
     with gr.Blocks() as demo:
         selected_row_index = gr.Number(visible=False)
-        with gr.Row():
-            with gr.Column():
-                audio_file_table = gr.Dataframe(headers=["File"], type="pandas", interactive=False)
-                data_type = gr.Radio(choices=["Files", "Folder"], value="Folder", label="Upload Audio Files")
-                input_path = gr.Textbox(label="Path of audios", scale=3, interactive=False)
-                browse_btn = gr.Button("Browse", min_width=1)
-                # root_path_label = gr.Label("Root path: ")
-            with gr.Column():
-                # Define audio_input and mel_spectrogram_output before using them in audio_file_table.select
-                audio_input = gr.Audio(label="Upload Audio Clip", type="filepath")
-                mel_spectrogram_output = gr.Image(label="Mel Spectrogram")
-                with gr.Row():
-                    species_button = gr.Button("Specie", variant="primary", )  # Botón verde, el texto se actualizará dinámicamente
-                    unknown_button = gr.Button("Unknown", variant="secondary")  # Botón naranja
-                    other_button = gr.Button("Other", variant="stop")  # Botón rojo
-                save_table_btn = gr.Button("Save Table")
-                load_csv_btn = gr.Button("Load CSV and Copy Validation")
-                csv_status = gr.Label()  # To display the status of the save operation
-                
-                browse_btn.click(on_browse, inputs=data_type, outputs=[input_path, audio_file_table])
-                audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button, selected_row_index])
-                species_button.click(on_species_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
-                unknown_button.click(on_unknown_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
-                other_button.click(on_other_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
-                save_table_btn.click(fn=save_table_to_csv, inputs=audio_file_table, outputs=csv_status)
-                load_csv_btn.click(fn=update_table_with_validation, inputs=audio_file_table, outputs=[audio_file_table, csv_status])
+        with gr.Tab("Load Audios"):
+            gr.Markdown("## Load Audio Files")
+            # audio_file_table = gr.Dataframe(headers=["File"], type="pandas", interactive=False)
+            data_type = gr.Radio(choices=["Files", "Folder"], value="Folder", label="Upload Audio Files")
+            input_path = gr.Textbox(label="Path of audios", scale=3, interactive=False)
+            browse_btn = gr.Button("Browse", min_width=1)
+        with gr.Tab("Validate BirdNET predictions"):
+            with gr.Row():
+                with gr.Column():
+                    gr.Markdown("## Audio Files")
+                    audio_file_table = gr.Dataframe(headers=["File"], type="pandas", interactive=False)
+                    # data_type = gr.Radio(choices=["Files", "Folder"], value="Folder", label="Upload Audio Files")
+                    # input_path = gr.Textbox(label="Path of audios", scale=3, interactive=False)
+                    # browse_btn = gr.Button("Browse", min_width=1)
+                    # root_path_label = gr.Label("Root path: ")
+                    save_table_btn = gr.Button("Save Table", variant="primary")
+                    load_csv_btn = gr.Button("Load CSV and Copy Validation", variant="primary")
+                    csv_status = gr.Label(value="No Validation Saved or Loaded")  # To display the status of the save operation
+
+                with gr.Column():
+                    gr.Markdown("## Validation")
+                    # Define audio_input and mel_spectrogram_output before using them in audio_file_table.select
+                    audio_input = gr.Audio(label="Audio", type="filepath")
+                    mel_spectrogram_output = gr.Image(label="Mel Spectrogram")
+
+                    with gr.Row():
+                        species_button = gr.Button("Specie", variant="primary", size="sm")  # Botón verde, el texto se actualizará dinámicamente
+                        other_button = gr.Button("Other", variant="stop", size="sm")  # Botón rojo
+                        unknown_button = gr.Button("Unknown", variant="secondary", size="sm")  # Botón naranja
+                        
+                    browse_btn.click(on_browse, inputs=data_type, outputs=[input_path, audio_file_table])
+                    audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button, selected_row_index, sample_audio, sample_image]) # TODO: Add here as outputt the sample stuff so it will be updated to audio and image
+                    
+                    species_button.click(on_species_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
+                    unknown_button.click(on_unknown_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
+                    other_button.click(on_other_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
+                    
+                    save_table_btn.click(fn=save_table_to_csv, inputs=audio_file_table, outputs=csv_status)
+                    load_csv_btn.click(fn=update_table_with_validation, inputs=audio_file_table, outputs=[audio_file_table, csv_status])
+
+                with gr.Column():
+                    gr.Markdown("## Sample Audio & Spectrogram")
+                    sample_audio.render()
+                    sample_image.render()
     return demo
 
-
+# TODO: Meter nombre de especie que sabemos que es, poner en Validation 0, e incluír campo Alternative con el nombre protencial
 
 demo = main()
 demo.launch(inbrowser=True)
