@@ -1,7 +1,6 @@
 # Web App
 from tkinter import Tk, filedialog
 import gradio as gr
-import tkinter as tk
 
 # Audio processing
 import librosa
@@ -10,8 +9,6 @@ import librosa.display
 # Data processing
 import numpy as np
 import pandas as pd
-import zipfile
-import tempfile
 
 # Image processing
 import matplotlib.pyplot as plt
@@ -73,10 +70,11 @@ def on_audio_selected(selected_row, evt: gr.SelectData):
         if evt and evt.index:
             selected_row_index = evt.index[0]
             audio_path = selected_row["Path"][selected_row_index]
+            audio_path = os.path.normpath(audio_path)
             species_name = selected_row["Specie"][selected_row_index] 
             # audio_path = selected_row["Path"][0] 
             mel_spectrogram_image = update_output(audio_path)
-            sample_audio_path = "Bird Vocalization Samples/" + species_name
+            sample_audio_path = "Bird Vocalization Samples" + os.sep + species_name
             sample_audio_files = list_audio_files_from_folder(sample_audio_path)
             if sample_audio_files:
                 sample_audio = sample_audio_files[0]
@@ -112,6 +110,7 @@ def list_audio_files_from_folder(folder_path):
     Returns:
         list: A list of full paths to the audio files found.
     """
+
     audio_files = []
     # Walk through the folder and subfolders and list all audio files
     for root, dirs, files in os.walk(folder_path):
@@ -144,7 +143,7 @@ def on_browse(data_type):
     if data_type == "Files":
         filenames = filedialog.askopenfilenames()
         if filenames:
-            audio_file_list = pd.DataFrame([{"Specie": f.split("/")[-2], "File": os.path.basename(f), "Validation": -1, "Alternative": " ", "Path": f} for f in filenames])
+            audio_file_list = pd.DataFrame([{"Specie": f.split(os.sep)[-2], "File": os.path.basename(f), "Validation": -1, "Alternative": " ", "Path": f} for f in filenames])
             root_dir_audio_files = os.path.dirname(filenames[0])
             root.destroy()
             return audio_file_list.to_string(index=False), audio_file_list
@@ -154,8 +153,9 @@ def on_browse(data_type):
     elif data_type == "Folder":
         folder_path = filedialog.askdirectory()
         if folder_path:
+            folder_path = os.path.normpath(folder_path)
             filenames = list_audio_files_from_folder(folder_path)
-            audio_file_list = pd.DataFrame([{"Specie": f.split("/")[-2], "File": os.path.basename(f),"Validation": -1, "Path": f} for f in filenames])
+            audio_file_list = pd.DataFrame([{"Specie": f.split(os.sep)[-2], "File": os.path.basename(f),"Validation": -1, "Path": f} for f in filenames])
             root_dir_audio_files = folder_path
             root.destroy()
             return audio_file_list.to_string(index=False), audio_file_list
