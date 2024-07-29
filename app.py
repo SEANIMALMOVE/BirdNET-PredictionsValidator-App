@@ -375,10 +375,14 @@ def tutorial_tab():
         ### Save and Load Validations
         1. To save the validations, click "Save Table".
         2. To load previous validations from a CSV file, click "Load CSV and Copy Validation".
-
-        ## Contact
-        If you have any questions or need assistance, please open an issue on the GitHub repository.
+                    
+        ## Video Tutorial
+        
         """)
+
+        embed_html = '<iframe width="560" height="315" src="https://www.youtube.com/embed/BJYW3RqA2uQ?si=SVWU3tZrFiRqfVuD" title="Tutorial" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
+        gr.HTML(embed_html)
+
     return tutorial
 
 def main():
@@ -442,7 +446,17 @@ def main():
                     sample_image.render()
         with gr.Tab("Tutorial"):
             tutorial_tab()
+    
+        # GitHub Issues Link
+        gr.Markdown("""
+            <div style="text-align: center;">
+                <a href="https://github.com/GrunCrow/BirdNET-PredictionsValidator-App/issues" target="_blank" style="display: inline-flex; align-items: center; text-decoration: none; color: inherit;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" alt="GitHub" width="30" height="30" style="vertical-align: middle; margin-right: 8px;">
+                    <span>To report issues or provide feedback, please visit the GitHub repository</span>
+                </a>
+            </div>
+            """)
     return demo
 
 demo = main()
-demo.launch(inbrowser=True)
+demo.launch(inbrowser=True, inline=True, show_api=False)
