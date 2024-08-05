@@ -38,9 +38,7 @@ BirdNET Predictions Validator App is a Gradio-based Python application designed 
 
 The following video tutorial demonstrates how to use the BirdNET Predictions Validator App executable file on a Windows system. It covers the installation process, how to run the application, and a walkthrough of the graphical user interface (GUI).
 
-<div style="text-align: center;">
-    <iframe width="560" height="315" src="https://www.youtube.com/embed/BJYW3RqA2uQ?si=Qc0bz6sQ_k2-Ykl-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-</div>
+[![Youtube Video Tutorial](assets/Docs/Images/video_tutorial.png)](https://youtu.be/BJYW3RqA2uQ)
 
 #### Installation on Windows
 
