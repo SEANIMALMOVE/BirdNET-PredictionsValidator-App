@@ -23,6 +23,13 @@ root_dir_audio_files = ""
 global audio_file_list
 audio_file_list = []
 
+SUGGESTED_SPECIES_FILE = "suggested_species.txt"
+
+def initialize_suggested_species_file():
+    if not os.path.exists(SUGGESTED_SPECIES_FILE):
+        with open(SUGGESTED_SPECIES_FILE, 'w') as file:
+            pass  # Create an empty file
+
 def audio_to_mel_spectrogram(audio_clip):
     """
     Convert an audio clip to a mel spectrogram image.
@@ -63,6 +70,7 @@ def on_audio_selected(selected_row, evt: gr.SelectData):
             - selected_row_index (int): The index of the selected row.
             - sample_audio (str): The path of a sample audio file for the selected species.
             - sample_image (numpy.ndarray): The mel spectrogram image of the sample audio file.
+            - suggested_specie (str): The suggested species for the selected audio.
 
             If no audio is selected or an error occurs, the tuple will contain None values.
     """
@@ -71,8 +79,8 @@ def on_audio_selected(selected_row, evt: gr.SelectData):
             selected_row_index = evt.index[0]
             audio_path = selected_row["Path"][selected_row_index]
             audio_path = os.path.normpath(audio_path)
-            species_name = selected_row["Specie"][selected_row_index] 
-            # audio_path = selected_row["Path"][0] 
+            species_name = selected_row["Specie"][selected_row_index]
+            suggested_specie = selected_row["Suggested Specie"][selected_row_index] if "Suggested Specie" in selected_row else None
             mel_spectrogram_image = update_output(audio_path)
             sample_audio_path = "Bird Vocalization Samples" + os.sep + species_name
             sample_audio_files = list_audio_files_from_folder(sample_audio_path)
@@ -84,8 +92,8 @@ def on_audio_selected(selected_row, evt: gr.SelectData):
                 sample_image = None
                 print("No audio files found for the selected species")
 
-            return mel_spectrogram_image, audio_path, species_name, selected_row_index, sample_audio, sample_image
-    return None, None, "Specie", -1, None, None
+            return mel_spectrogram_image, audio_path, species_name, selected_row_index, sample_audio, sample_image, suggested_specie
+    return None, None, "Specie", -1, None, None, None
 
 def update_output(audio_clip_path):
     """
@@ -167,7 +175,7 @@ def on_browse(data_type):
         filenames = filedialog.askopenfilenames()
         if filenames:
             # Extract audio time
-            audio_file_list = pd.DataFrame([{"Specie": f.split(os.sep)[-2], "Time": convert_to_hhmmss(f),"File": os.path.basename(f), "Validation": -1, "Alternative": " ", "Path": f} for f in filenames])
+            audio_file_list = pd.DataFrame([{"Specie": f.split(os.sep)[-2], "Time": convert_to_hhmmss(f),"File": os.path.basename(f), "Validation": -1, "Suggested Specie": " ", "Path": f} for f in filenames])
             root_dir_audio_files = os.path.dirname(filenames[0])
             root.destroy()
             return audio_file_list.to_string(index=False), audio_file_list
@@ -209,7 +217,7 @@ def update_validation(audio_table, row_index, new_value, suggestedSpecie=None):
     if 0 <= row_index < len(audio_table):
         # Change value of the row row index, column validation to newvalue
         audio_table.at[row_index, "Validation"] = new_value
-        audio_table.at[row_index, "Alternative"] = suggestedSpecie
+        audio_table.at[row_index, "Suggested Specie"] = suggestedSpecie
 
         def style_row(row):
             # Check the Validation value and apply color styling to the entire row
@@ -219,8 +227,8 @@ def update_validation(audio_table, row_index, new_value, suggestedSpecie=None):
                 # light grey for Unknown
                 return ['background-color: #D3D3D3'] * len(row)
             elif row["Validation"] == 0:
-                if row["Alternative"] is not None:
-                    return ['background-color: #FFA500'] * len(row) # Orange for Alternative
+                if row["Suggested Specie"] is not None:
+                    return ['background-color: #FFA500'] * len(row) # Orange for Suggested Specie
                 return ['background-color: #B02E0C'] * len(row)  # Red for Validation = 0
             elif row["Validation"] == 2:
                 # Light green for Bird
@@ -288,6 +296,37 @@ def on_other_button_clicked(audio_table, selected_row_index):
     audio_table = update_validation(audio_table, selected_row_index, 0)  # Update to 0 for 'Other'
     return audio_table
 
+def add_suggested_species(species):
+    with open(SUGGESTED_SPECIES_FILE, 'r') as file:
+        species_list = file.read().splitlines()
+    
+    # If specie is not in the list, add it as the last row
+    if species not in species_list:
+        with open(SUGGESTED_SPECIES_FILE, 'a') as file:
+            file.write(species + "\n")
+
+    # if specie is in the list, move it to the last row
+    else:
+        species_list.remove(species)
+        species_list.append(species)
+        with open(SUGGESTED_SPECIES_FILE, 'w') as file:
+            for specie in species_list:
+                file.write(specie + "\n")
+
+def get_suggested_species():
+    with open(SUGGESTED_SPECIES_FILE, 'r') as file:
+        species_list = file.read().splitlines()
+    return species_list
+
+def on_suggested_specie_button_clicked(audio_table, selected_row_index, suggested_specie_text):
+    species = suggested_specie_text.strip() if suggested_specie_text else None
+    print(f"Suggested species: {species}")
+    if species:
+        add_suggested_species(species)
+        # Update the audio table with the suggested species
+        audio_table = update_validation(audio_table, selected_row_index, 0, species)  # Update to 0 for 'Other'
+    return audio_table, gr.update(choices=get_suggested_species())
+
 def suggestedSpecie_button_clicked(audio_table, selected_row_index, suggestedSpecie):
     """
     Updates the audio table with the suggested species for the selected row.
@@ -325,7 +364,7 @@ def load_csv_and_copy_validation(audio_table):
         df = pd.read_csv(file_path)
         # Map per File from audio table and df and change Validation value to df value
         audio_table["Validation"] = df["File"].map(df.set_index("File")["Validation"])
-        audio_table["Alternative"] = df["File"].map(df.set_index("File")["Alternative"])
+        audio_table["Suggested Specie"] = df["File"].map(df.set_index("File")["Suggested Specie"])
 
         def style_row(row):
             # Check the Validation value and apply color styling to the entire row
@@ -335,8 +374,8 @@ def load_csv_and_copy_validation(audio_table):
                 # light grey for Unknown
                 return ['background-color: #D3D3D3'] * len(row)
             elif row["Validation"] == 0:
-                if row["Alternative"] is not None:
-                    return ['background-color: #FFA500'] * len(row) # Orange for Alternative
+                if row["Suggested Specie"] is not None:
+                    return ['background-color: #FFA500'] * len(row) # Orange for Suggested Specie
                 return ['background-color: #B02E0C'] * len(row)  # Red for Validation = 0
             elif row["Validation"] == 2:
                 # Light green for Bird
@@ -440,9 +479,10 @@ def main():
     Returns:
         gr.Blocks: The main UI component.
     """
+    initialize_suggested_species_file()
     sample_audio = gr.Audio(label="Sample Audio per specie", type="filepath")
     sample_image = gr.Image("Sample Mel Spectrogram")
-    audio_file_table = gr.Dataframe(headers=["File"], type="pandas", interactive=False)
+    audio_file_table = gr.Dataframe(headers=["File", "Specie", "Suggested Specie"], type="pandas", interactive=False)
     with gr.Blocks() as demo:
         selected_row_index = gr.Number(visible=False)
         with gr.Tab("Load Audios"):
@@ -476,16 +516,17 @@ def main():
                         bird_button = gr.Button("Bird", variant="secondary", size="sm")
 
                     with gr.Row():
-                        suggestedSpecie_text = gr.Textbox(label="Suggested Specie")
+                        suggested_species = get_suggested_species()
+                        suggestedSpecie_text = gr.Dropdown(choices=suggested_species, label="Suggested Specie", interactive=True, allow_custom_value=True)
                         suggestedSpecie_button = gr.Button("Suggested Specie", variant="primary", size="sm")
                         
-                    audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button, selected_row_index, sample_audio, sample_image])
+                    audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button, selected_row_index, sample_audio, sample_image, suggestedSpecie_text])
                     
                     species_button.click(on_species_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
                     unknown_button.click(on_unknown_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
                     other_button.click(on_other_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
                     bird_button.click(on_bird_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=audio_file_table)
-                    suggestedSpecie_button.click(suggestedSpecie_button_clicked, inputs=[audio_file_table, selected_row_index, suggestedSpecie_text], outputs=audio_file_table)
+                    suggestedSpecie_button.click(on_suggested_specie_button_clicked, inputs=[audio_file_table, selected_row_index, suggestedSpecie_text], outputs=[audio_file_table, suggestedSpecie_text])
                     
                     save_table_btn.click(fn=save_table_to_csv, inputs=audio_file_table, outputs=csv_status)
                     load_csv_btn.click(fn=update_table_with_validation, inputs=audio_file_table, outputs=[audio_file_table, csv_status])
