@@ -18,6 +18,9 @@ from PIL import Image
 from io import BytesIO
 import os
 
+# API requests
+import requests
+
 global root_dir_audio_files
 root_dir_audio_files = ""
 global audio_file_list
@@ -470,6 +473,38 @@ def tutorial_tab():
 
     return tutorial
 
+
+CURRENT_VERSION = "v1.4"  # Replace with your current app version
+GITHUB_REPO = "GrunCrow/BirdNET-PredictionsValidator-App"  # Replace with your GitHub repo
+
+def check_for_updates():
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+    response = requests.get(url)
+    if response.status_code == 200:
+        latest_release = response.json()
+        latest_version = latest_release["tag_name"]
+        if latest_version != CURRENT_VERSION:
+            return f"A new version {latest_version} is available! Please update."
+    return "You are using the latest version."
+
+def build_footer():
+    update_message = check_for_updates()
+    with gr.Row():
+        gr.Markdown(
+            f"""
+            <div style='display: flex; justify-content: space-around; align-items: center; padding: 10px; text-align: center'>
+                <div>
+                    <div style="display: flex;flex-direction: row;">
+                        GUI version:&nbsp;<span id="current-version">{CURRENT_VERSION}</span>
+                        <span id="update-available" style="display: {'inline' if 'new version' in update_message else 'none'}; color: red; margin-left: 10px;">
+                            <a href="https://github.com/{GITHUB_REPO}/releases/latest" target="_blank">Update available!</a>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            """
+        )
+
 def main():
     """
     This function sets up the main user interface for the Label Audios App.
@@ -479,6 +514,7 @@ def main():
     Returns:
         gr.Blocks: The main UI component.
     """
+    
     initialize_suggested_species_file()
     sample_audio = gr.Audio(label="Sample Audio per specie", type="filepath")
     sample_image = gr.Image("Sample Mel Spectrogram")
@@ -537,16 +573,21 @@ def main():
                     sample_image.render()
         with gr.Tab("Tutorial"):
             tutorial_tab()
-    
-        # GitHub Issues Link
-        gr.Markdown("""
-            <div style="text-align: center;">
-                <a href="https://github.com/GrunCrow/BirdNET-PredictionsValidator-App/issues" target="_blank" style="display: inline-flex; align-items: center; text-decoration: none; color: inherit;">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" alt="GitHub" width="30" height="30" style="vertical-align: middle; margin-right: 8px;">
-                    <span>To report issues or provide feedback, please visit the GitHub repository</span>
-                </a>
-            </div>
-            """)
+
+        with gr.Row():
+            # Build and display the footer
+            build_footer()
+
+            # GitHub Issues Link
+            gr.Markdown("""
+                <div style="text-align: center;">
+                    <a href="https://github.com/GrunCrow/BirdNET-PredictionsValidator-App/issues" target="_blank" style="display: inline-flex; align-items: center; text-decoration: none; color: inherit;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" alt="GitHub" width="30" height="30" style="vertical-align: middle; margin-right: 8px;">
+                        <span>To report issues or provide feedback, please visit the GitHub repository</span>
+                    </a>
+                </div>
+                """)
+
     return demo
 
 demo = main()
