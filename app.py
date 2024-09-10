@@ -21,12 +21,16 @@ import os
 # API requests
 import requests
 
-global root_dir_audio_files
-root_dir_audio_files = ""
-global audio_file_list
-audio_file_list = []
-
 SUGGESTED_SPECIES_FILE = "suggested_species.txt"
+CURRENT_VERSION = "v1.5"  # Replace with your current app version
+GITHUB_REPO = "GrunCrow/BirdNET-PredictionsValidator-App"  # Replace with your GitHub repo
+
+root_dir_audio_files = ""
+audio_file_list = []
+sample_audio_dir = ""
+current_sample_audio_file = ""
+current_specie_name = ""
+current_row_index = -1
 
 def initialize_suggested_species_file():
     if not os.path.exists(SUGGESTED_SPECIES_FILE):
@@ -77,16 +81,22 @@ def on_audio_selected(selected_row, evt: gr.SelectData):
 
             If no audio is selected or an error occurs, the tuple will contain None values.
     """
+    global sample_audio_dir, current_sample_audio_file, current_row_index
+
     if not selected_row.empty:
+        global current_specie_name
         if evt and evt.index:
             selected_row_index = evt.index[0]
+            current_row_index = selected_row_index
             audio_path = selected_row["Path"][selected_row_index]
             audio_path = os.path.normpath(audio_path)
             species_name = selected_row["Specie"][selected_row_index]
+            current_specie_name = species_name
             suggested_specie = selected_row["Suggested Specie"][selected_row_index] if "Suggested Specie" in selected_row else None
             mel_spectrogram_image = update_output(audio_path)
-            sample_audio_path = "Bird Vocalization Samples" + os.sep + species_name
-            sample_audio_files = list_audio_files_from_folder(sample_audio_path)
+            # global sample_audio_dir
+            specie_audio_dir = sample_audio_dir + os.sep + species_name
+            sample_audio_files = list_audio_files_from_folder(specie_audio_dir)
             if sample_audio_files:
                 sample_audio = sample_audio_files[0]
                 sample_image = update_output(sample_audio)
@@ -94,6 +104,8 @@ def on_audio_selected(selected_row, evt: gr.SelectData):
                 sample_audio = None
                 sample_image = None
                 print("No audio files found for the selected species")
+
+            current_sample_audio_file = sample_audio
 
             return mel_spectrogram_image, audio_path, species_name, selected_row_index, sample_audio, sample_image, suggested_specie
     return None, None, "Specie", -1, None, None, None
@@ -129,6 +141,7 @@ def list_audio_files_from_folder(folder_path):
             if file.endswith(('.mp3', '.wav', ".WAV", ".MP3")):
                 full_path = os.path.join(root, file)
                 audio_files.append(full_path)
+
     return audio_files
 
 def convert_to_hhmmss(filename):
@@ -200,7 +213,21 @@ def on_browse(data_type):
     else:
         root.destroy()
         return "Please select an upload option", pd.DataFrame()
-    
+
+def on_browse_sample_audio_folder():
+    global sample_audio_dir
+
+    root = Tk()
+    root.attributes("-topmost", True)
+    root.withdraw()
+
+    folder = filedialog.askdirectory()
+    if folder:
+        sample_audio_dir = os.path.normpath(folder)
+        # print("New sample audio folder selected:", sample_audio_dir)
+        root.destroy()
+    else:
+        root.destroy()
 
 # Buttons
 def update_validation(audio_table, row_index, new_value, suggestedSpecie=None):
@@ -235,7 +262,7 @@ def update_validation(audio_table, row_index, new_value, suggestedSpecie=None):
                 return ['background-color: #B02E0C'] * len(row)  # Red for Validation = 0
             elif row["Validation"] == 2:
                 # Light green for Bird
-                return ['background-color: #78c451'] * len(row)
+                return ['background-color: #86b46e'] * len(row)
             else:
                 return [''] * len(row)  # Default, no styling
 
@@ -323,7 +350,7 @@ def get_suggested_species():
 
 def on_suggested_specie_button_clicked(audio_table, selected_row_index, suggested_specie_text):
     species = suggested_specie_text.strip() if suggested_specie_text else None
-    print(f"Suggested species: {species}")
+    # print(f"Suggested species: {species}")
     if species:
         add_suggested_species(species)
         # Update the audio table with the suggested species
@@ -382,7 +409,7 @@ def load_csv_and_copy_validation(audio_table):
                 return ['background-color: #B02E0C'] * len(row)  # Red for Validation = 0
             elif row["Validation"] == 2:
                 # Light green for Bird
-                return ['background-color: #78c451'] * len(row)
+                return ['background-color: #86b46e'] * len(row)
             else:
                 return [''] * len(row)  # Default, no styling
 
@@ -433,6 +460,43 @@ def update_table_with_validation(audio_table):
     validation_df, msg = load_csv_and_copy_validation(audio_table)
     return validation_df, msg
 
+
+# Function to get the list of sample files
+def get_sample_files():
+    # return sorted if audio fie .WAV, .wav, .MP3, .mp3
+    global sample_audio_dir
+    specie_audio_dir = sample_audio_dir + os.sep + current_specie_name
+    sample_audio_files = list_audio_files_from_folder(specie_audio_dir)
+    return sample_audio_files
+
+# Function to load the next sample
+def load_next_sample(current_sample):
+    global current_sample_audio_file
+
+    sample_files = get_sample_files()
+
+    current_index = sample_files.index(current_sample)
+    next_index = (current_index + 1) % len(sample_files)
+    current_sample_audio_file = sample_files[next_index]
+    return current_sample_audio_file
+
+# Function to load the previous sample
+def load_prev_sample(current_sample):
+    global current_sample_audio_file
+
+    sample_files = get_sample_files()
+    current_index = sample_files.index(current_sample)
+    prev_index = (current_index - 1) % len(sample_files)
+    current_sample_audio_file = sample_files[prev_index]
+    return current_sample_audio_file
+
+# Assuming `sample_audio` and `sample_image` are components that can be updated
+def update_sample_audio_and_image(new_sample):
+    sample_audio = new_sample
+    sample_image = update_output(new_sample)
+
+    return sample_audio, sample_image
+
 def tutorial_tab():
     """
     Generate the tutorial tab content.
@@ -472,10 +536,6 @@ def tutorial_tab():
         gr.HTML(embed_html)
 
     return tutorial
-
-
-CURRENT_VERSION = "v1.4"  # Replace with your current app version
-GITHUB_REPO = "GrunCrow/BirdNET-PredictionsValidator-App"  # Replace with your GitHub repo
 
 def check_for_updates():
     url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
@@ -571,6 +631,17 @@ def main():
                     gr.Markdown("## Sample Audio & Spectrogram")
                     sample_audio.render()
                     sample_image.render()
+                    with gr.Row():
+                        prev_button = gr.Button("←", variant="secondary")
+                        next_button = gr.Button("→", variant="secondary")
+                    
+                    global current_sample_audio_file
+                    prev_button.click(fn=lambda: update_sample_audio_and_image(load_prev_sample(current_sample_audio_file)), inputs=[], outputs=[sample_audio, sample_image])
+                    next_button.click(fn=lambda: update_sample_audio_and_image(load_next_sample(current_sample_audio_file)), inputs=[], outputs=[sample_audio, sample_image])
+
+                    # Add folder selection button
+                    browse_samplefolder_btn = gr.Button("Select Sample Audio Folder", min_width=1)
+                    browse_samplefolder_btn.click(on_browse_sample_audio_folder, inputs=[], outputs=[])
         with gr.Tab("Tutorial"):
             tutorial_tab()
 
