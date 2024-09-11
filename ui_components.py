@@ -1,0 +1,156 @@
+# ui_components.py
+
+import os
+from gradio import Blocks, Markdown, SelectData, Row, HTML
+import requests
+
+from audio_processing import list_audio_files_from_folder
+
+# Caching
+from functools import lru_cache
+
+from config import CURRENT_VERSION, GITHUB_REPO
+from audio_processing import update_audio_and_image
+
+# Global variables
+from config import Globals
+
+def on_audio_selected(selected_row, evt: SelectData):
+    """
+    Process the selected audio and return relevant information.
+
+    Args:
+        selected_row (pandas.DataFrame): The selected row containing audio information.
+        evt (gr.SelectData): The event object containing additional information.
+
+    Returns:
+        tuple: A tuple containing the following information:
+            - mel_spectrogram_image (numpy.ndarray): The mel spectrogram image of the selected audio.
+            - audio_path (str): The path of the selected audio file.
+            - species_name (str): The name of the species associated with the selected audio.
+            - selected_row_index (int): The index of the selected row.
+            - sample_audio (str): The path of a sample audio file for the selected species.
+            - sample_image (numpy.ndarray): The mel spectrogram image of the sample audio file.
+            - suggested_specie (str): The suggested species for the selected audio.
+
+            If no audio is selected or an error occurs, the tuple will contain None values.
+    """
+
+    if not selected_row.empty:
+        if evt and evt.index:
+            selected_row_index = evt.index[0]
+            Globals.set_current_row_index(selected_row_index)
+            audio_path = selected_row["Path"][selected_row_index]
+            audio_path = os.path.normpath(audio_path)
+            species_name = selected_row["Specie"][selected_row_index]
+            Globals.set_current_specie_name(species_name)
+            suggested_specie = selected_row["Suggested Specie"][selected_row_index] if "Suggested Specie" in selected_row else None
+            audio_path, mel_spectrogram_image = update_audio_and_image(audio_path)
+
+            sample_audio, sample_image = get_sample_audio_and_image()
+
+            return mel_spectrogram_image, audio_path, species_name, selected_row_index, sample_audio, sample_image, suggested_specie
+    return None, None, "Specie", -1, None, None, None
+
+def apply_styles(row):
+    # Check the Validation value and apply color styling to the entire row
+    if row["Validation"] == 1: # Green for Validation = 1
+        return ['background-color: #63C132'] * len(row)  
+    elif row["Validation"] == 2: # Light green for Bird
+        return ['background-color: #86b46e'] * len(row)
+    elif row["Validation"] == 0: # Orange for Suggested Specie
+        return ['background-color: #FFA500'] * len(row) 
+    elif row["Validation"] == -1: # Red for Other = -1
+        return ['background-color: #B02E0C'] * len(row)  # Red for Validation = 0
+    elif row["Validation"] == -2: # light grey for Unknown
+        return ['background-color: #D3D3D3'] * len(row)
+    else:
+        return [''] * len(row)  # Default, no styling
+
+def get_sample_audio_and_image():
+    sample_audio_files = list_audio_files_from_folder(Globals.get_sample_audio_dir() + os.sep + Globals.get_current_specie_name())
+    if sample_audio_files:
+        sample_audio, sample_image = update_audio_and_image(sample_audio_files[0])
+    else:
+        sample_audio = None
+        sample_image = None
+        print("No audio files found for the selected species")
+
+    Globals.set_current_sample_audio_file(sample_audio)
+
+    return sample_audio, sample_image
+
+def update_validation(audio_table, row_index, new_value, suggestedSpecie=None):
+    if 0 <= row_index < len(audio_table):
+        audio_table.at[row_index, "Validation"] = new_value
+        audio_table.at[row_index, "Suggested Specie"] = suggestedSpecie
+        return audio_table.style.apply(apply_styles, axis=1)
+    return audio_table
+
+def check_for_updates():
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+    response = requests.get(url)
+    if response.status_code == 200:
+        latest_release = response.json()
+        latest_version = latest_release["tag_name"]
+        if latest_version != CURRENT_VERSION:
+            return f"A new version {latest_version} is available! Please update."
+    return "You are using the latest version."
+
+def build_footer():
+    update_message = check_for_updates()
+    with Row():
+        Markdown(
+            f"""
+            <div style='display: flex; justify-content: space-around; align-items: center; padding: 10px; text-align: center'>
+                <div>
+                    <div style="display: flex;flex-direction: row;">
+                        GUI version:&nbsp;<span id="current-version">{CURRENT_VERSION}</span>
+                        <span id="update-available" style="display: {'inline' if 'new version' in update_message else 'none'}; color: red; margin-left: 10px;">
+                            <a href="https://github.com/{GITHUB_REPO}/releases/latest" target="_blank">Update available!</a>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            """
+        )
+
+def tutorial_tab():
+    """
+    Generate the tutorial tab content.
+
+    Returns:
+    gr.Blocks: The tutorial tab content.
+    """
+    with Blocks() as tutorial:
+        Markdown("""
+        # Tutorial
+
+        ## Purpose of the Application
+        The BirdNET Predictions Validator App is designed to help validate bird species predictions generated by BirdNET. This tool allows users to view and listen to audio segments and record the accuracy of predictions in a downloadable CSV file.
+
+        ## How to Use the Application
+
+        ### Load Audios
+        1. Navigate to the "Load Audios" tab.
+        2. Select "Files" or "Folder" and click "Browse" to upload your audio files.
+
+        ### Validate Predictions
+        1. Go to the "Validate BirdNET predictions" tab.
+        2. Select an audio file from the table.
+        3. View the mel spectrogram and listen to the audio.
+        4. Use the "Specie", "Other", and "Unknown" buttons to validate the predictions.
+        5. If necessary, enter a suggested species and click "Suggested Specie".
+
+        ### Save and Load Validations
+        1. To save the validations, click "Save Table".
+        2. To load previous validations from a CSV file, click "Load CSV and Copy Validation".
+                    
+        ## Video Tutorial
+        
+        """)
+
+        embed_html = '<iframe width="560" height="315" src="https://www.youtube.com/embed/BJYW3RqA2uQ?si=SVWU3tZrFiRqfVuD" title="Tutorial" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
+        HTML(embed_html)
+
+    return tutorial

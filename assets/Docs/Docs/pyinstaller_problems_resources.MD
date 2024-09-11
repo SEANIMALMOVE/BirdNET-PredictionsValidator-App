@@ -33,6 +33,11 @@ This guide helps you compile your Python application using PyInstaller on both W
     pyinstaller app_windows.spec
     ```
 
+
+    ```sh
+    pyinstaller --onefile app.py
+    ```
+
 ## Linux
 
 1. Create the spec file:

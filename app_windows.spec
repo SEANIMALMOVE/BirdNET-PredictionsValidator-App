@@ -7,7 +7,7 @@ datas += collect_data_files('gradio')
 datas += collect_data_files('librosa')
 
 a = Analysis(
-    ['app.py'],
+    ['app.py', 'audio_processing.py', 'species_management.py', 'data_processing.py', 'ui_components.py', 'config.py'],
     pathex=[],
     binaries=[],
     datas=datas,
