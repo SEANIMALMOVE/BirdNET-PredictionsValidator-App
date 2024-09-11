@@ -75,9 +75,9 @@ def on_browse_sample_audio_folder():
 
 def on_species_button_clicked(audio_table, selected_row_index):
 
-    selected_row_index += 1
-
     audio_table = update_validation(audio_table, selected_row_index, 1)  # Update to 1 for 'Specie'
+
+    selected_row_index += 1
 
     next_audio = load_next_audio_file()
     audio, image = update_audio_and_image(next_audio)
@@ -96,10 +96,10 @@ def on_species_button_clicked(audio_table, selected_row_index):
 
 def on_unknown_button_clicked(audio_table, selected_row_index):
 
-    selected_row_index += 1
+    
 
     audio_table = update_validation(audio_table, selected_row_index, -2)  # Update to -2 for 'Unknown'
-
+    selected_row_index += 1
     next_audio = load_next_audio_file()
     audio, image = update_audio_and_image(next_audio)
 
@@ -117,10 +117,10 @@ def on_unknown_button_clicked(audio_table, selected_row_index):
 
 def on_bird_button_clicked(audio_table, selected_row_index):
 
-    selected_row_index += 1
+    
 
     audio_table = update_validation(audio_table, selected_row_index, 2, "Bird")  # Update to 1 for 'Bird'
-
+    selected_row_index += 1
     next_audio = load_next_audio_file()
     audio, image = update_audio_and_image(next_audio)
 
@@ -137,10 +137,10 @@ def on_bird_button_clicked(audio_table, selected_row_index):
     return audio_table, selected_row_index, audio, image, Globals.get_current_specie_name(), Globals.get_current_sample_audio_file(), sample_image, Globals.get_current_specie_name()
 
 def on_other_button_clicked(audio_table, selected_row_index):    
-    selected_row_index += 1
+    
 
     audio_table = update_validation(audio_table, selected_row_index, -1)  # Update to 0 for 'Other'
-
+    selected_row_index += 1
     next_audio = load_next_audio_file()
     audio, image = update_audio_and_image(next_audio)
 
@@ -163,10 +163,10 @@ def on_suggested_specie_button_clicked(audio_table, selected_row_index, suggeste
         add_suggested_species(species)
         # Update the audio table with the suggested species
 
-    selected_row_index += 1
+    
 
     audio_table = update_validation(audio_table, selected_row_index, 0, species)  # Update to 0 for 'Other'
-    
+    selected_row_index += 1
     next_audio = load_next_audio_file()
     audio, image = update_audio_and_image(next_audio)
 

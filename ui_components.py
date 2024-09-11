@@ -41,7 +41,7 @@ def on_audio_selected(audio_table, evt: SelectData):
         if evt and evt.index:
             selected_row_index = evt.index[0]
             Globals.set_current_row_index(selected_row_index)
-            audio_table_styled = update_and_highlight_row(audio_table, None)
+            audio_table_styled = update_and_highlight_row(audio_table, None, from_audio_selected=True)
             audio_path = audio_table["Path"][selected_row_index]
             audio_path = os.path.normpath(audio_path)
             species_name = audio_table["Specie"][selected_row_index]
@@ -85,13 +85,15 @@ def get_sample_audio_and_image():
 # Diccionario global para almacenar los estilos de las filas
 row_styles = {}
 
-def update_and_highlight_row(audio_table, validation_value):
+def update_and_highlight_row(audio_table, validation_value, from_audio_selected=False):
     """
     Actualiza el estilo de la fila seleccionada dependiendo del valor de validación
     y resalta la fila actual.
     """
+    row_corrector = -1 if from_audio_selected else 0
+
     current_row_index = Globals.get_current_row_index()
-    previous_row_index = current_row_index - 1
+    next_row_index = current_row_index + 1 + row_corrector
 
     # Cambia los colores según el valor de validación
     if validation_value == 1:  # Validado como especie
@@ -109,14 +111,14 @@ def update_and_highlight_row(audio_table, validation_value):
 
     # Actualizar el diccionario de estilos
     if color:
-        row_styles[previous_row_index] = color
-    elif previous_row_index in row_styles:
-        del row_styles[previous_row_index]
+        row_styles[current_row_index] = color
+    elif current_row_index in row_styles:
+        del row_styles[current_row_index]
 
     def apply_styles(row):
         styles = []
         for col in row.index:
-            if row.name == current_row_index:
+            if row.name == next_row_index:
                 styles.append('border: 2px solid orange')
             elif row.name in row_styles:
                 styles.append('background-color: {}'.format(row_styles[row.name]))
