@@ -1,10 +1,31 @@
 species,count
 ,0
+Coldsadaumba palumbus,0
+Columdsadasba palumbus,0
+i,0
+Uapupa epops,0
+prueba,0
+Columba palumdsadbus,0
+o,0
+Upupa eposdadasdasps,0
+Coldasdaumba palumbus,0
+Upupa epopsdsadas,0
+Upupa epdsasaops,0
+a,0
+u,0
+Columbadsad palumbus,0
+Upupa epopsdsadasdsa,0
+Upupa epdasdadasops,0
+prueba 3,0
+e,0
+Coldasumba palumbus,0
+Columbaadsadsd palumbus,0
+no es eso,0
 ,0
 ,0
 ,0
 ,0
 ,0
-prueba 3,1
-prueba,2
-no es eso,6
+Upupa dsadasdsadepops,0
+v,0
+fsd,1

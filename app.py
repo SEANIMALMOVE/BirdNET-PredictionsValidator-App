@@ -74,9 +74,11 @@ def on_browse_sample_audio_folder():
 # Buttons
 
 def on_species_button_clicked(audio_table, selected_row_index):
-    audio_table = update_validation(audio_table, selected_row_index, 1)  # Update to 1 for 'Specie'
 
     selected_row_index += 1
+
+    audio_table = update_validation(audio_table, selected_row_index, 1)  # Update to 1 for 'Specie'
+
     next_audio = load_next_audio_file()
     audio, image = update_audio_and_image(next_audio)
 
@@ -93,10 +95,11 @@ def on_species_button_clicked(audio_table, selected_row_index):
     return audio_table, selected_row_index, audio, image, Globals.get_current_specie_name(), Globals.get_current_sample_audio_file(), sample_image, Globals.get_current_specie_name()
 
 def on_unknown_button_clicked(audio_table, selected_row_index):
-    
-    audio_table = update_validation(audio_table, selected_row_index, -2)  # Update to -2 for 'Unknown'
 
     selected_row_index += 1
+
+    audio_table = update_validation(audio_table, selected_row_index, -2)  # Update to -2 for 'Unknown'
+
     next_audio = load_next_audio_file()
     audio, image = update_audio_and_image(next_audio)
 
@@ -113,9 +116,11 @@ def on_unknown_button_clicked(audio_table, selected_row_index):
     return audio_table, selected_row_index, audio, image, Globals.get_current_specie_name(), Globals.get_current_sample_audio_file(), sample_image, Globals.get_current_specie_name()
 
 def on_bird_button_clicked(audio_table, selected_row_index):
-    audio_table = update_validation(audio_table, selected_row_index, 2, "Bird")  # Update to 1 for 'Bird'
 
     selected_row_index += 1
+
+    audio_table = update_validation(audio_table, selected_row_index, 2, "Bird")  # Update to 1 for 'Bird'
+
     next_audio = load_next_audio_file()
     audio, image = update_audio_and_image(next_audio)
 
@@ -131,10 +136,11 @@ def on_bird_button_clicked(audio_table, selected_row_index):
 
     return audio_table, selected_row_index, audio, image, Globals.get_current_specie_name(), Globals.get_current_sample_audio_file(), sample_image, Globals.get_current_specie_name()
 
-def on_other_button_clicked(audio_table, selected_row_index):
-    audio_table = update_validation(audio_table, selected_row_index, -1)  # Update to 0 for 'Other'
-    
+def on_other_button_clicked(audio_table, selected_row_index):    
     selected_row_index += 1
+
+    audio_table = update_validation(audio_table, selected_row_index, -1)  # Update to 0 for 'Other'
+
     next_audio = load_next_audio_file()
     audio, image = update_audio_and_image(next_audio)
 
@@ -156,9 +162,11 @@ def on_suggested_specie_button_clicked(audio_table, selected_row_index, suggeste
     if species:
         add_suggested_species(species)
         # Update the audio table with the suggested species
-        audio_table = update_validation(audio_table, selected_row_index, 0, species)  # Update to 0 for 'Other'
 
     selected_row_index += 1
+
+    audio_table = update_validation(audio_table, selected_row_index, 0, species)  # Update to 0 for 'Other'
+    
     next_audio = load_next_audio_file()
     audio, image = update_audio_and_image(next_audio)
 
@@ -268,7 +276,7 @@ def main():
                         suggestedSpecie_text = gr.Dropdown(choices=suggested_species, label="Suggested Specie", interactive=True, allow_custom_value=True, filterable=True)
                         suggestedSpecie_button = gr.Button("Suggested Specie", variant="primary", size="sm")
                         
-                    audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button, selected_row_index, sample_audio, sample_image, suggestedSpecie_text])
+                    audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button, selected_row_index, sample_audio, sample_image, suggestedSpecie_text, audio_file_table])
                     
                     species_button.click(on_species_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=[audio_file_table, selected_row_index, audio_input, mel_spectrogram_output, species_button, sample_audio, sample_image])
                     unknown_button.click(on_unknown_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=[audio_file_table, selected_row_index, audio_input, mel_spectrogram_output, species_button, sample_audio, sample_image])

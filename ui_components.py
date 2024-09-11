@@ -3,6 +3,7 @@
 import os
 from gradio import Blocks, Markdown, SelectData, Row, HTML
 import requests
+import pandas as pd
 
 from audio_processing import list_audio_files_from_folder
 
@@ -15,7 +16,7 @@ from audio_processing import update_audio_and_image
 # Global variables
 from config import Globals
 
-def on_audio_selected(selected_row, evt: SelectData):
+def on_audio_selected(audio_table, evt: SelectData):
     """
     Process the selected audio and return relevant information.
 
@@ -36,20 +37,21 @@ def on_audio_selected(selected_row, evt: SelectData):
             If no audio is selected or an error occurs, the tuple will contain None values.
     """
 
-    if not selected_row.empty:
+    if not audio_table.empty:
         if evt and evt.index:
             selected_row_index = evt.index[0]
             Globals.set_current_row_index(selected_row_index)
-            audio_path = selected_row["Path"][selected_row_index]
+            audio_table_styled = update_and_highlight_row(audio_table, None)
+            audio_path = audio_table["Path"][selected_row_index]
             audio_path = os.path.normpath(audio_path)
-            species_name = selected_row["Specie"][selected_row_index]
+            species_name = audio_table["Specie"][selected_row_index]
             Globals.set_current_specie_name(species_name)
-            suggested_specie = selected_row["Suggested Specie"][selected_row_index] if "Suggested Specie" in selected_row else None
+            suggested_specie = audio_table["Suggested Specie"][selected_row_index] if "Suggested Specie" in audio_table else None
             audio_path, mel_spectrogram_image = update_audio_and_image(audio_path)
 
             sample_audio, sample_image = get_sample_audio_and_image()
 
-            return mel_spectrogram_image, audio_path, species_name, selected_row_index, sample_audio, sample_image, suggested_specie
+            return mel_spectrogram_image, audio_path, species_name, selected_row_index, sample_audio, sample_image, suggested_specie, audio_table_styled
     return None, None, "Specie", -1, None, None, None
 
 def apply_styles(row):
@@ -80,11 +82,63 @@ def get_sample_audio_and_image():
 
     return sample_audio, sample_image
 
+# Diccionario global para almacenar los estilos de las filas
+row_styles = {}
+
+def update_and_highlight_row(audio_table, validation_value):
+    """
+    Actualiza el estilo de la fila seleccionada dependiendo del valor de validación
+    y resalta la fila actual.
+    """
+    current_row_index = Globals.get_current_row_index()
+    previous_row_index = current_row_index - 1
+
+    # Cambia los colores según el valor de validación
+    if validation_value == 1:  # Validado como especie
+        color = '#63C132'
+    elif validation_value == 2:  # Desconocido
+        color = '#86b46e'
+    elif validation_value == 0:  # Desconocido
+        color = '#FFA500'
+    elif validation_value == -1:  # Desconocido
+        color = '#B02E0C'
+    elif validation_value == -2:  # Desconocido
+        color = '#D3D3D3'
+    else:
+        color = None
+
+    # Actualizar el diccionario de estilos
+    if color:
+        row_styles[previous_row_index] = color
+    elif previous_row_index in row_styles:
+        del row_styles[previous_row_index]
+
+    def apply_styles(row):
+        styles = []
+        for col in row.index:
+            if row.name == current_row_index:
+                styles.append('border: 2px solid orange')
+            elif row.name in row_styles:
+                styles.append('background-color: {}'.format(row_styles[row.name]))
+            else:
+                styles.append('')
+        return styles
+
+    return audio_table.style.apply(apply_styles, axis=1)
+
+def highlight_current_row(audio_table):
+    # Create row lines orange style for that row
+    def highlight_row(row):
+        return ['border: 2px solid orange' if row.name == Globals.get_current_row_index() else '' for _ in row]
+    
+    return audio_table.style.apply(highlight_row, axis=1)
+
 def update_validation(audio_table, row_index, new_value, suggestedSpecie=None):
     if 0 <= row_index < len(audio_table):
         audio_table.at[row_index, "Validation"] = new_value
         audio_table.at[row_index, "Suggested Specie"] = suggestedSpecie
-        return audio_table.style.apply(apply_styles, axis=1)
+        # return audio_table.style.apply(apply_styles, axis=1)
+        return update_and_highlight_row(audio_table, new_value)  # Verde para validación
     return audio_table
 
 def check_for_updates():
