@@ -238,7 +238,7 @@ def main():
     initialize_suggested_species_file()
     sample_audio = gr.Audio(label="Sample Audio per specie", type="filepath")
     sample_image = gr.Image("Sample Mel Spectrogram")
-    audio_file_table = gr.Dataframe(headers=["File", "Specie", "Suggested Specie"], type="pandas", interactive=False)
+    audio_file_table = gr.Dataframe(headers=["File", "Specie", "Suggested Specie"], type="pandas", interactive=False, height=500)
     with gr.Blocks() as demo:
         selected_row_index = gr.Number(visible=False)
         with gr.Tab("Load Audios"):
