@@ -1,0 +1,123 @@
+species,count
+Apus pallidus,0
+Apus pallidus_Certhia brachydactyla,0
+Apus pallidus_Chloris chloris,0
+Apus apus,0
+Apus apus / Apus pallidus,0
+Apus apus / Apus pallidus_Chloris chloris,0
+Apus apus / Apus pallidus_Luscinia megarhynchos,0
+Apus apus / Apus pallidus_Passer domesticus,0
+Apus apus / Apus pallidus_Serinus serinus,0
+Apus apus / Apus pallidus_Streptopelia decaocto,0
+Apus apus / Apus pallidus_Turdus merula,0
+Apus apus / Apus pallidus_bird,0
+Carduelis carduelis,0
+Carduelis carduelis_Apus pallidus_Passer domesticus,0
+Carduelis carduelis_Apus apus / Apus pallidus,0
+Carduelis carduelis_Chloris chloris,0
+Carduelis carduelis_Luscinia megarhynchos,0
+Carduelis carduelis_Luscinia megarhynchos_Apus apus / Apus pallidus,0
+Carduelis carduelis_Noise,0
+Carduelis carduelis_Passer domesticus,0
+Carduelis carduelis_Serinus serinus,0
+Carduelis carduelis_Streptopelia decaocto,0
+Carduelis carduelis_Streptopelia decaocto_Chloris chloris,0
+Carduelis carduelis_Streptopelia decaocto_bird,0
+Certhia brachydactyla,0
+Chloris chloris,0
+Chloris chloris_Apus apus / Apus pallidus,0
+Chloris chloris_Luscinia megarhynchos,0
+Chloris chloris_Luscinia megarhynchos_Serinus serinus,0
+Chloris chloris_Passer domesticus,0
+Chloris chloris_Passer domesticus_Streptopelia decaocto,0
+Chloris chloris_Serinus serinus,0
+Chloris chloris_Serinus serinus_Apus apus / Apus pallidus,0
+Chloris chloris_Serinus serinus_Pica pica,0
+Chloris chloris_Serinus serinus_Streptopelia decaocto,0
+Chloris chloris_Streptopelia decaocto,0
+Chloris chloris_Turdus merula,0
+Chloris chloris_bird,0
+Chlrois chloris_Streptopelia decaocto,0
+Columba palumbus_Apus pallidus,0
+Himantopus himantopus,0
+Hirundo rustica_Streptopelia decaocto_Passer domesticus_Apus apus / Apus pallidus,0
+Luscinia megarhynchos,0
+Luscinia megarhynchos_Apus apus / Apus pallidus,0
+Luscinia megarhynchos_Certhia brachydactyla,0
+Luscinia megarhynchos_Chlrois chloris_Serinus serinus,0
+Luscinia megarhynchos_Passer domesticus,0
+Luscinia megarhynchos_Serinus serinus,0
+Luscinia megarhynchos_Serinus serinus_Streptopelia decaocto,0
+Luscinia megarhynchos_Streptopelia decaocto,0
+Luscinia megarhynchos_Turdus merula,0
+Luscinia megarhynchos_bird,0
+Noise,0
+Noise_Serinus serinus,0
+Parus major_Luscinia megarhynchos,0
+Passer domesticus,0
+Passer domesticus_Apus apus / Apus pallidus_Streptopelia decaocto,0
+Passer domesticus_Chloris chloris,0
+Passer domesticus_Chloris chloris_Streptopelia decaocto,0
+Passer domesticus_Luscinia megarhynchos_Streptopelia decaocto,0
+Passer domesticus_Noise,0
+Passer domesticus_Serinus serinus_Streptopelia decaocto,0
+Passer domesticus_Serinus serinus,0
+Passer domesticus_Streptopelia decaocto,0
+Passer domesticus_Streptopelia decaocto_Apus apus / Apus pallidus,0
+Passer domesticus_Streptopelia decaocto_Apus apus / Apus pallidus_Pica pica,0
+Passer domesticus_Streptopelia decaocto_Chloris chloris,0
+Pica pica_Serinus serinus,0
+Pica pica_Streptopelia decaocto,0
+Serinus serinus,0
+Serinus serinus_Chloris chloris,0
+Serinus serinus_Luscinia megarhynchos,0
+Serinus serinus_Luscinia megarhynchos_Streptopelia decaocto_Apus apus / Apus pallidus,0
+Serinus serinus_Luscinia megarynchos_Streptopelia decaocto,0
+Serinus serinus_Parus major,0
+Serinus serinus_Passer domesticus_noise,0
+Serinus serinus_Pica pica,0
+Serinus serinus_Streptopelia decaocto,0
+Serinus serinus_bird,0
+Streptopelia decaocto,0
+Streptopelia decaocto_Apus apus / Apus pallidus,0
+Streptopelia decaocto_Apus apus / Apus pallidus_Luscinia megarhynchos,0
+Streptopelia decaocto_Apus apus / Apus pallidus_Turdus merula,0
+Streptopelia decaocto_Caruduelis carduelis_bird,0
+Streptopelia decaocto_Certhia brachydactyla,0
+Streptopelia decaocto_Certhia brachydactyla_Passer domesticus,0
+Streptopelia decaocto_Chloris chloris,0
+Streptopelia decaocto_Chloris chloris_Luscinia megarhynchos,0
+Streptopelia decaocto_Chloris chloris_Passer domesticus,0
+Streptopelia decaocto_Chloris chloris_Serinus serinus,0
+Streptopelia decaocto_Curruca melanocephala,0
+Streptopelia decaocto_Larus michahellis,0
+Streptopelia decaocto_Luscinia megarhynchos,0
+Streptopelia decaocto_Luscinia megarhynchos_Passer domesticus,0
+Streptopelia decaocto_Luscinia megarhynchos_Pica pica,0
+Streptopelia decaocto_Luscinia megarhynchos_Turuds merula,0
+Streptopelia decaocto_Passer domesticus,0
+Streptopelia decaocto_Passer domesticus_Chloris chloris,0
+Streptopelia decaocto_Pica pica,0
+Streptopelia decaocto_Serinus serinus,0
+Streptopelia decaocto_Serinus serinus_Passer domesticus,0
+Streptopelia decaocto_Turdus merula,0
+Streptopelia decaocto_bird,0
+Tringa totanus?,0
+Turdus merula,0
+Turdus merula_Apus apus / Apus pallidus,0
+Turdus merula_Carduelis carduelis,0
+Turdus merula_Carduelis carduelis_Chloris chloris,0
+Turdus merula_Chloris chloris,0
+Turdus merula_Luscinia megarhynchos,0
+Turdus merula_Luscinia megarhynchos_Apus apus / Apus pallidus,0
+Turdus merula_Luscinia megarhynchos_Apus apus / Apus pallidus_Certhia brachydactyla,0
+Turdus merula_Luscinia megarhynchos_Apus apus / Apus pallidus_Curruca melanocephala,0
+Turdus merula_Luscinia megarhynchos_Certhia brachydactyla,0
+Turdus merula_Streptopelia decaocto,0
+Turdus merula_Streptopelia decaocto_Certhia brachydactyla,0
+Turdus merula_bird,0
+bird_Passer domesticus_Streptopelia decaocto_Apus apus / Apus pallidus,0
+bird_Streptopelia decaocto,0
+bird_Streptopelia decaocto_Apus apus / Apus pallidus,0
+bird_Streptopelia decaocto_Certhia brachydactyla,0
+bird_Streptopelia decaocto_Luscinia megarhynchos,0

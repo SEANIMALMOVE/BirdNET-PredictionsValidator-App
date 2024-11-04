@@ -172,3 +172,5 @@ cython_debug/
 # Project specific gitignore
 
 Audios/*
+SuggestedSpecies/suggested_species_Nacho.txt
+SuggestedSpecies/suggested_species_Laura.txt

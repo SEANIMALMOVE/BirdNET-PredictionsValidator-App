@@ -98,7 +98,7 @@ def update_and_highlight_row(audio_table, validation_value, from_audio_selected=
     # Cambia los colores según el valor de validación
     if validation_value == 1:  # Validado como especie
         color = '#63C132'
-    elif validation_value == 2:  # Desconocido
+    elif validation_value == 2:  # Bird
         color = '#86b46e'
     elif validation_value == 0:  # Desconocido
         color = '#FFA500'

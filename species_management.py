@@ -11,18 +11,31 @@ def initialize_suggested_species_file():
                 file.write(",".join(required_columns) + "\n")  # Create an empty file with headers
         else:
             # Backup the existing file
-            os.rename(SUGGESTED_SPECIES_FILE, SUGGESTED_SPECIES_FILE + ".bak")
+            backup_file = SUGGESTED_SPECIES_FILE + ".bak"
+            if os.path.exists(backup_file):
+                os.remove(backup_file)
+            os.rename(SUGGESTED_SPECIES_FILE, backup_file)
             
-            df = pd.read_csv(SUGGESTED_SPECIES_FILE + ".bak")
+            df = pd.read_csv(backup_file)
             df['count'] = 0  # Reset the count to 0
             
             # Ensure the correct column order and save the new file
             df = df[required_columns]
+
+            # Ensure file is deleted before writing to it
+            if os.path.exists(SUGGESTED_SPECIES_FILE):
+                os.remove(SUGGESTED_SPECIES_FILE)
+
             df.to_csv(SUGGESTED_SPECIES_FILE, index=False)
     except Exception as e:
         print(f"Error initializing suggested species file: {str(e)}")
         # If an error occurs, change name of file to avoid further errors and create a new one
-        os.rename(SUGGESTED_SPECIES_FILE, SUGGESTED_SPECIES_FILE + ".error.bak")
+        error_backup_file = SUGGESTED_SPECIES_FILE + ".error.bak"
+        if os.path.exists(error_backup_file):
+            os.remove(error_backup_file)
+        os.rename(SUGGESTED_SPECIES_FILE, error_backup_file)
+        if os.path.exists(SUGGESTED_SPECIES_FILE):
+            os.remove(SUGGESTED_SPECIES_FILE)
         initialize_suggested_species_file()
 
 def add_suggested_species(species):

@@ -1,7 +1,6 @@
 species,count
 specie_1,0
 specie_2,0
-specie_3,0
 specie_4,0
 specie_5,0
 specie_6,0
@@ -15,3 +14,4 @@ specie_6,0
 8_specie,0
 9_specie,0
 10_specie,0
+specie_3,1
