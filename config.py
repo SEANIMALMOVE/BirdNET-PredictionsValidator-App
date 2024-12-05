@@ -1,6 +1,6 @@
 # config.py
 
-CURRENT_VERSION = "v1.5.2"  # Replace with your current app version
+CURRENT_VERSION = "v1.6"  # Replace with your current app version
 GITHUB_REPO = "GrunCrow/BirdNET-PredictionsValidator-App"  # Replace with your GitHub repo
 SUGGESTED_SPECIES_FILE = "suggested_species.txt"  # File to store suggested species
 

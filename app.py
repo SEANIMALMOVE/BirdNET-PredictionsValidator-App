@@ -74,25 +74,40 @@ def on_browse_sample_audio_folder():
 # Buttons
 
 def on_species_button_clicked(audio_table, selected_row_index):
+    """
+    Handle the event when the species button is clicked.
+
+    Parameters:
+    - audio_table (pandas.DataFrame): The audio table.
+    - selected_row_index (int): The index of the selected row.
+
+    Returns:
+    - tuple: Updated audio table, new selected row index, audio, image, current species name, current sample audio file, sample image, current species name.
+    """
 
     audio_table = update_validation(audio_table, selected_row_index, 1)  # Update to 1 for 'Specie'
 
     selected_row_index += 1
 
-    next_audio = load_next_audio_file()
-    audio, image = update_audio_and_image(next_audio)
+    # Check if the selected_row_index is within the range of the audio_table
+    if selected_row_index < len(audio_table.data):
+        next_audio = load_next_audio_file()
+        audio, image = update_audio_and_image(next_audio)
 
-    audio_files = Globals.get_audio_file_list()
-    new_specie_name = audio_files["Specie"][selected_row_index]
+        audio_files = Globals.get_audio_file_list()
+        new_specie_name = audio_files["Specie"][selected_row_index]
 
-    if new_specie_name != Globals.get_current_specie_name():
-        Globals.set_current_specie_name(new_specie_name)
-        
-    sample_audio, sample_image = get_sample_audio_and_image()
+        if new_specie_name != Globals.get_current_specie_name():
+            Globals.set_current_specie_name(new_specie_name)
+            
+        sample_audio, sample_image = get_sample_audio_and_image()
 
-    Globals.set_current_sample_audio_file(sample_audio)
+        Globals.set_current_sample_audio_file(sample_audio)
 
-    return audio_table, selected_row_index, audio, image, Globals.get_current_specie_name(), Globals.get_current_sample_audio_file(), sample_image, Globals.get_current_specie_name()
+        return audio_table, selected_row_index, audio, image, Globals.get_current_specie_name(), Globals.get_current_sample_audio_file(), sample_image, Globals.get_current_specie_name()
+    else:
+        # If it's the last row, stop the audio and return the current state
+        return audio_table, selected_row_index, None, None, Globals.get_current_specie_name(), None, None, Globals.get_current_specie_name()
 
 def on_unknown_button_clicked(audio_table, selected_row_index):
 
@@ -331,4 +346,5 @@ def main():
     return demo
 
 demo = main()
-demo.launch(inbrowser=True, inline=True, show_api=False)
+# launch in port 7864
+demo.launch(inbrowser=True, inline=True, show_api=False, server_port=7864, debug=True)

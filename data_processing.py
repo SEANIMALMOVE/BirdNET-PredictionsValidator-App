@@ -26,6 +26,15 @@ def load_csv_and_copy_validation(audio_table):
             df = pd.read_csv(file_path)
             # Map per File from audio table and df and change Validation value to df value
             audio_table = audio_table.merge(df[['File', 'Validation', 'Suggested Specie']], on='File', how='left')
+            
+            # If exists Validation_x and Validation_y, keep Validation from df
+            if 'Validation_x' in audio_table and 'Validation_y' in audio_table:
+                audio_table['Validation'] = audio_table['Validation_y']
+                audio_table = audio_table.drop(columns=['Validation_x', 'Validation_y'])
+            # If exists Suggested Specie_x and Suggested Specie_y, keep Suggested Specie from df
+            if 'Suggested Specie_x' in audio_table and 'Suggested Specie_y' in audio_table:
+                audio_table['Suggested Specie'] = audio_table['Suggested Specie_y']
+                audio_table = audio_table.drop(columns=['Suggested Specie_x', 'Suggested Specie_y'])
 
             audio_table = audio_table.style.apply(apply_styles, axis=1)
 

@@ -14,4 +14,4 @@ specie_6,0
 8_specie,0
 9_specie,0
 10_specie,0
-specie_3,1
+specie_3,0
