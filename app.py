@@ -9,7 +9,7 @@ import pandas as pd
 
 import os
 
-from audio_processing import load_audio_files_from_folder, update_audio_and_image, list_audio_files_from_folder, convert_to_hhmmss, extract_date_from_filename
+from audio_processing import load_audio_files_from_folder, update_audio_and_image, list_audio_files_from_folder, extract_time_from_filename, extract_date_from_filename
 from species_management import add_suggested_species, get_suggested_species, initialize_suggested_species_file
 from data_processing import save_table_to_csv, update_table_with_validation
 from ui_components import build_footer, tutorial_tab, on_audio_selected, update_validation, get_sample_audio_and_image
@@ -26,8 +26,8 @@ def on_browse(data_type):
         if filenames:
             # Extraer tiempo de audio
             Globals.set_audio_file_list(pd.DataFrame([
-                {"Specie": f.split(os.sep)[-2], "File": os.path.basename(f), "Time": convert_to_hhmmss(f), "Validation": -100, "Suggested Specie": " ", "Path": f}
-                for f in filenames
+                {"Idx": idx + 1, "Specie": f.split(os.sep)[-2], "File": os.path.basename(f), "Validation": -100, "Suggested Specie": " ", "Path": f}
+                for idx, f in enumerate(filenames)
             ]))
             Globals.set_root_dir_audio_files(os.path.dirname(filenames[0]))
             root.destroy()
@@ -43,8 +43,8 @@ def on_browse(data_type):
                 gr.Markdown("Loading audio files, please wait...")
                 filenames = load_audio_files_from_folder(folder_path)  # Usando caché
             Globals.set_audio_file_list(pd.DataFrame([
-                {"Specie": f.split(os.sep)[-2], "File": os.path.basename(f), "Time": convert_to_hhmmss(f), "Validation": -100, "Path": f}
-                for f in filenames
+                {"Idx": idx+1,"Specie": f.split(os.sep)[-2], "File": os.path.basename(f), "Validation": -100, "Suggested Specie": " ", "Path": f}
+                for idx, f in enumerate(filenames)
             ]))
             Globals.set_root_dir_audio_files(folder_path)
             root.destroy()
@@ -105,7 +105,7 @@ def on_species_button_clicked(audio_table, selected_row_index):
         Globals.set_current_sample_audio_file(sample_audio)
 
         audio_path = audio_files["Path"][selected_row_index]
-        time = audio_files["Time"][selected_row_index]
+        time = extract_time_from_filename(audio_path)
         date = extract_date_from_filename(audio_path)
 
         return audio_table, selected_row_index, audio, image, Globals.get_current_specie_name(), Globals.get_current_sample_audio_file(), sample_image, Globals.get_current_specie_name(), date, time
@@ -257,7 +257,7 @@ def main():
     initialize_suggested_species_file()
     sample_audio = gr.Audio(label="Sample Audio per specie", type="filepath")
     sample_image = gr.Image("Sample Mel Spectrogram")
-    audio_file_table = gr.Dataframe(headers=["File", "Specie", "Suggested Specie"], type="pandas", interactive=False)
+    audio_file_table = gr.Dataframe(headers=["Idx", "File", "Specie", "Suggested Specie"], type="pandas", interactive=False)
     with gr.Blocks() as demo:
         selected_row_index = gr.Number(visible=False)
         with gr.Tab("Load Audios"):
@@ -300,7 +300,7 @@ def main():
                         suggestedSpecie_text = gr.Dropdown(choices=suggested_species, label="Suggested Specie", interactive=True, allow_custom_value=True, filterable=True)
                         suggestedSpecie_button = gr.Button("Suggested Specie", variant="primary", size="sm")
                         
-                    audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button, selected_row_index, sample_audio, sample_image, suggestedSpecie_text, audio_file_table, time_text, date_text])
+                    audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button, selected_row_index, sample_audio, sample_image, suggestedSpecie_text, audio_file_table, date_text, time_text])
                     
                     species_button.click(on_species_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=[audio_file_table, selected_row_index, audio_input, mel_spectrogram_output, species_button, sample_audio, sample_image])
                     unknown_button.click(on_unknown_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=[audio_file_table, selected_row_index, audio_input, mel_spectrogram_output, species_button, sample_audio, sample_image])
@@ -356,4 +356,4 @@ def main():
 
 demo = main()
 # launch in port 7864
-demo.launch(inbrowser=True, inline=True, show_api=False, server_port=7864, debug=True)
+demo.launch(inbrowser=True, inline=True, show_api=False, server_port=7864)

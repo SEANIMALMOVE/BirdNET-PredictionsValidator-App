@@ -11,7 +11,7 @@ from audio_processing import list_audio_files_from_folder
 from functools import lru_cache
 
 from config import CURRENT_VERSION, GITHUB_REPO
-from audio_processing import update_audio_and_image, extract_date_from_filename
+from audio_processing import update_audio_and_image, extract_date_from_filename, extract_time_from_filename
 
 # Global variables
 from config import Globals
@@ -43,9 +43,9 @@ def on_audio_selected(audio_table, evt: SelectData):
             Globals.set_current_row_index(selected_row_index)
             audio_table_styled = update_and_highlight_row(audio_table, None, from_audio_selected=True)
             audio_path = audio_table["Path"][selected_row_index]
-            time = audio_table["Time"][selected_row_index]
-            date = extract_date_from_filename(audio_path)
             audio_path = os.path.normpath(audio_path)
+            time = extract_time_from_filename(audio_path)
+            date = extract_date_from_filename(audio_path)
             species_name = audio_table["Specie"][selected_row_index]
             Globals.set_current_specie_name(species_name)
             suggested_specie = audio_table["Suggested Specie"][selected_row_index] if "Suggested Specie" in audio_table else None
@@ -53,7 +53,7 @@ def on_audio_selected(audio_table, evt: SelectData):
 
             sample_audio, sample_image = get_sample_audio_and_image()
 
-            return mel_spectrogram_image, audio_path, species_name, selected_row_index, sample_audio, sample_image, suggested_specie, audio_table_styled, time, date
+            return mel_spectrogram_image, audio_path, species_name, selected_row_index, sample_audio, sample_image, suggested_specie, audio_table_styled, date, time
     return None, None, "Specie", -1, None, None, None
 
 def apply_styles(row):

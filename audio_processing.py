@@ -73,28 +73,31 @@ def list_audio_files_from_folder(folder_path):
 
     return [str(file) for file in Path(folder_path).rglob('*') if file.suffix.lower() in ['.mp3', '.wav']]
 
-def convert_to_hhmmss(filename):
-    # Extract the 2nd and 3rd parameters from the filename
-    parts = os.path.basename(filename).split("_")
-    
-    # Convert parts[2] (HHMMSS) to total seconds
-    hhmmss = parts[2]
-    hours = int(hhmmss[:2])
-    minutes = int(hhmmss[2:4])
-    seconds = int(hhmmss[4:6])
-    total_seconds = hours * 3600 + minutes * 60 + seconds
-    
-    # Add the seconds from parts[3] (which is in milliseconds)
-    additional_seconds = int(parts[3]) / 1000
-    total_seconds += additional_seconds
-    
-    # Convert total seconds to HH:MM:SS format
-    hours = int(total_seconds // 3600)
-    minutes = int((total_seconds % 3600) // 60)
-    seconds = int(total_seconds % 60)
-    
-    # Format the result as HH:MM:SS
-    return f"{hours:02}:{minutes:02}:{seconds:02}"
+def extract_time_from_filename(filename):
+    try:
+        # Extract the 2nd and 3rd parameters from the filename
+        parts = os.path.basename(filename).split("_")
+        
+        # Convert parts[2] (HHMMSS) to total seconds
+        hhmmss = parts[2]
+        hours = int(hhmmss[:2])
+        minutes = int(hhmmss[2:4])
+        seconds = int(hhmmss[4:6])
+        total_seconds = hours * 3600 + minutes * 60 + seconds
+        
+        # Add the seconds from parts[3] (which is in milliseconds)
+        additional_seconds = int(parts[3]) / 1000
+        total_seconds += additional_seconds
+        
+        # Convert total seconds to HH:MM:SS format
+        hours = int(total_seconds // 3600)
+        minutes = int((total_seconds % 3600) // 60)
+        seconds = int(total_seconds % 60)
+        
+        # Format the result as HH:MM:SS
+        return f"{hours:02}:{minutes:02}:{seconds:02}"
+    except:
+        return "Unknown Time"
 
 def extract_date_from_filename(filename):
     """
