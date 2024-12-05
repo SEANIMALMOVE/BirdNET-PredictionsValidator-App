@@ -96,6 +96,23 @@ def convert_to_hhmmss(filename):
     # Format the result as HH:MM:SS
     return f"{hours:02}:{minutes:02}:{seconds:02}"
 
+def extract_date_from_filename(filename):
+    """
+    Extract the date from the filename.
+
+    Parameters:
+    filename (str): The name of the file.
+
+    Returns:
+    str: The extracted date in YYYY-MM-DD format.
+    """
+    try:
+        date_str = filename.split('_')[1]  # Assuming the date is the second value separated by '_'
+        date_formatted = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"  # Convert to YYYY-MM-DD format
+        return date_formatted
+    except IndexError:
+        return "Unknown Date"
+
 def update_audio_and_image(audio_path):
     audio = load_audio(audio_path)
     image = get_mel_spectrogram(audio_path)
