@@ -133,6 +133,18 @@ Contributions are welcome! If you have suggestions for improvements or find bugs
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
+## Reference
+
+```
+@misc{BirdNETPredictionsValidator2024,
+  author       = {Márquez-Rodríguez, Alba},
+  title        = {BirdNET Predictions Validator App},
+  year         = {2024},
+  howpublished = {\url{https://github.com/SEANIMALMOVE/BirdNET-PredictionsValidator-App}},
+  note         = {Version 1.6, accessed: YYYY-MM-DD},
+}
+```
+
 ## Contact
 
 If you have any questions or need further assistance, please feel free to contact me in the Issues of the repository.
