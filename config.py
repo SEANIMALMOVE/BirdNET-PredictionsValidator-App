@@ -1,8 +1,9 @@
 # config.py
 
-CURRENT_VERSION = "v1.6"  # Replace with your current app version
+CURRENT_VERSION = "v1.7"  # Replace with your current app version
 GITHUB_REPO = "GrunCrow/BirdNET-PredictionsValidator-App"  # Replace with your GitHub repo
 SUGGESTED_SPECIES_FILE = "suggested_species.txt"  # File to store suggested species
+COMMENTS_FILE = "comments.txt"
 
 class Globals:
     _sample_audio_dir = ""

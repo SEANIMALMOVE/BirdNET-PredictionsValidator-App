@@ -10,7 +10,7 @@ import pandas as pd
 import os
 
 from audio_processing import load_audio_files_from_folder, update_audio_and_image, list_audio_files_from_folder, extract_time_from_filename, extract_date_from_filename
-from species_management import add_suggested_species, get_suggested_species, initialize_suggested_species_file
+from species_management import add_suggested_species, get_suggested_species, initialize_suggested_species_file, initialize_comments_file, add_comment, get_comments
 from data_processing import save_table_to_csv, update_table_with_validation
 from ui_components import build_footer, tutorial_tab, on_audio_selected, update_validation, get_sample_audio_and_image
 
@@ -73,7 +73,7 @@ def on_browse_sample_audio_folder():
 
 # Buttons
 
-def on_species_button_clicked(audio_table, selected_row_index):
+def on_species_button_clicked(audio_table, selected_row_index, comment):
     """
     Handle the event when the species button is clicked.
 
@@ -84,6 +84,8 @@ def on_species_button_clicked(audio_table, selected_row_index):
     Returns:
     - tuple: Updated audio table, new selected row index, audio, image, current species name, current sample audio file, sample image, current species name.
     """
+    add_comment(comment)
+    audio_table.at[selected_row_index, "Comment"] = comment if comment else pd.NA
 
     audio_table = update_validation(audio_table, selected_row_index, 1)  # Update to 1 for 'Specie'
 
@@ -113,9 +115,10 @@ def on_species_button_clicked(audio_table, selected_row_index):
         # If it's the last row, stop the audio and return the current state
         return audio_table, selected_row_index, None, None, Globals.get_current_specie_name(), None, None, Globals.get_current_specie_name(), None, None
 
-def on_unknown_button_clicked(audio_table, selected_row_index):
+def on_unknown_button_clicked(audio_table, selected_row_index, comment):
 
-    
+    add_comment(comment)
+    audio_table.at[selected_row_index, "Comment"] = comment if comment else pd.NA
 
     audio_table = update_validation(audio_table, selected_row_index, -2)  # Update to -2 for 'Unknown'
     selected_row_index += 1
@@ -134,9 +137,10 @@ def on_unknown_button_clicked(audio_table, selected_row_index):
 
     return audio_table, selected_row_index, audio, image, Globals.get_current_specie_name(), Globals.get_current_sample_audio_file(), sample_image, Globals.get_current_specie_name()
 
-def on_bird_button_clicked(audio_table, selected_row_index):
+def on_bird_button_clicked(audio_table, selected_row_index, comment):
 
-    
+    add_comment(comment)
+    audio_table.at[selected_row_index, "Comment"] = comment if comment else pd.NA
 
     audio_table = update_validation(audio_table, selected_row_index, 2, "Bird")  # Update to 1 for 'Bird'
     selected_row_index += 1
@@ -155,8 +159,10 @@ def on_bird_button_clicked(audio_table, selected_row_index):
 
     return audio_table, selected_row_index, audio, image, Globals.get_current_specie_name(), Globals.get_current_sample_audio_file(), sample_image, Globals.get_current_specie_name()
 
-def on_other_button_clicked(audio_table, selected_row_index):    
+def on_other_button_clicked(audio_table, selected_row_index, comment):    
     
+    add_comment(comment)
+    audio_table.at[selected_row_index, "Comment"] = comment if comment else pd.NA
 
     audio_table = update_validation(audio_table, selected_row_index, -1)  # Update to 0 for 'Other'
     selected_row_index += 1
@@ -175,14 +181,18 @@ def on_other_button_clicked(audio_table, selected_row_index):
 
     return audio_table, selected_row_index, audio, image, Globals.get_current_specie_name(), Globals.get_current_sample_audio_file(), sample_image, Globals.get_current_specie_name()
 
-def on_suggested_specie_button_clicked(audio_table, selected_row_index, suggested_specie_text):
+def on_suggested_specie_button_clicked(audio_table, selected_row_index, suggested_specie_text, comment):
+    
+    # Add comment if it doesnt exist
+    add_comment(comment)
+
+    audio_table.at[selected_row_index, "Comment"] = comment if comment else pd.NA
+    
     species = suggested_specie_text.strip() if suggested_specie_text else None
     # print(f"Suggested species: {species}")
     if species:
         add_suggested_species(species)
         # Update the audio table with the suggested species
-
-    
 
     audio_table = update_validation(audio_table, selected_row_index, 0, species)  # Update to 0 for 'Other'
     selected_row_index += 1
@@ -255,9 +265,18 @@ def main():
     """
     
     initialize_suggested_species_file()
+    initialize_comments_file()
+
+    # Get comments from the initialized file
+    comments = get_comments()
+    if not comments:  # If there are no comments, set the default option
+        comments = ["No Comments"]
+
     sample_audio = gr.Audio(label="Sample Audio per specie", type="filepath")
     sample_image = gr.Image("Sample Mel Spectrogram")
     audio_file_table = gr.Dataframe(headers=["Idx", "File", "Specie", "Suggested Specie"], type="pandas", interactive=False)
+    comment_box = gr.Dropdown(value="No comments", choices=comments, label="Comments", interactive=True, allow_custom_value=True, filterable=True)
+
     with gr.Blocks() as demo:
         selected_row_index = gr.Number(visible=False)
         with gr.Tab("Load Audios"):
@@ -300,13 +319,13 @@ def main():
                         suggestedSpecie_text = gr.Dropdown(choices=suggested_species, label="Suggested Specie", interactive=True, allow_custom_value=True, filterable=True)
                         suggestedSpecie_button = gr.Button("Suggested Specie", variant="primary", size="sm")
                         
-                    audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button, selected_row_index, sample_audio, sample_image, suggestedSpecie_text, audio_file_table, date_text, time_text])
+                    audio_file_table.select(fn=on_audio_selected, inputs=[audio_file_table], outputs=[mel_spectrogram_output, audio_input, species_button, selected_row_index, sample_audio, sample_image, suggestedSpecie_text, audio_file_table, date_text, time_text, comment_box])
                     
-                    species_button.click(on_species_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=[audio_file_table, selected_row_index, audio_input, mel_spectrogram_output, species_button, sample_audio, sample_image])
-                    unknown_button.click(on_unknown_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=[audio_file_table, selected_row_index, audio_input, mel_spectrogram_output, species_button, sample_audio, sample_image])
-                    other_button.click(on_other_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=[audio_file_table, selected_row_index, audio_input, mel_spectrogram_output, species_button, sample_audio, sample_image])
-                    bird_button.click(on_bird_button_clicked, inputs=[audio_file_table, selected_row_index], outputs=[audio_file_table, selected_row_index, audio_input, mel_spectrogram_output, species_button, sample_audio, sample_image])
-                    suggestedSpecie_button.click(on_suggested_specie_button_clicked, inputs=[audio_file_table, selected_row_index, suggestedSpecie_text], outputs=[audio_file_table, suggestedSpecie_text, selected_row_index, audio_input, mel_spectrogram_output, species_button, sample_audio, sample_image, suggestedSpecie_text])
+                    species_button.click(on_species_button_clicked, inputs=[audio_file_table, selected_row_index, comment_box], outputs=[audio_file_table, selected_row_index, audio_input, mel_spectrogram_output, species_button, sample_audio, sample_image])
+                    unknown_button.click(on_unknown_button_clicked, inputs=[audio_file_table, selected_row_index, comment_box], outputs=[audio_file_table, selected_row_index, audio_input, mel_spectrogram_output, species_button, sample_audio, sample_image])
+                    other_button.click(on_other_button_clicked, inputs=[audio_file_table, selected_row_index, comment_box], outputs=[audio_file_table, selected_row_index, audio_input, mel_spectrogram_output, species_button, sample_audio, sample_image])
+                    bird_button.click(on_bird_button_clicked, inputs=[audio_file_table, selected_row_index, comment_box], outputs=[audio_file_table, selected_row_index, audio_input, mel_spectrogram_output, species_button, sample_audio, sample_image])
+                    suggestedSpecie_button.click(on_suggested_specie_button_clicked, inputs=[audio_file_table, selected_row_index, suggestedSpecie_text, comment_box], outputs=[audio_file_table, suggestedSpecie_text, selected_row_index, audio_input, mel_spectrogram_output, species_button, sample_audio, sample_image, suggestedSpecie_text])
                     
                     save_table_btn.click(fn=save_table_to_csv, inputs=audio_file_table, outputs=csv_status)
                     load_csv_btn.click(fn=update_table_with_validation, inputs=audio_file_table, outputs=[audio_file_table, csv_status])
@@ -335,6 +354,8 @@ def main():
 
                     # Add observations box to write
                     # gr.Textbox(label="Observations", type="text", placeholder="Write your observations here...", scale=3)
+                    # comment_box = gr.Textbox(label="Comments", type="text", placeholder="Write your comments here...", scale=3)
+                    comment_box.render()
         with gr.Tab("Tutorial"):
             tutorial_tab()
 

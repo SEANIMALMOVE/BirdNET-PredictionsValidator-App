@@ -49,12 +49,13 @@ def on_audio_selected(audio_table, evt: SelectData):
             species_name = audio_table["Specie"][selected_row_index]
             Globals.set_current_specie_name(species_name)
             suggested_specie = audio_table["Suggested Specie"][selected_row_index] if "Suggested Specie" in audio_table else None
+            comment = audio_table["Comment"][selected_row_index] if "Comment" in audio_table else None
             audio_path, mel_spectrogram_image = update_audio_and_image(audio_path)
 
             sample_audio, sample_image = get_sample_audio_and_image()
 
-            return mel_spectrogram_image, audio_path, species_name, selected_row_index, sample_audio, sample_image, suggested_specie, audio_table_styled, date, time
-    return None, None, "Specie", -1, None, None, None
+            return mel_spectrogram_image, audio_path, species_name, selected_row_index, sample_audio, sample_image, suggested_specie, audio_table_styled, date, time, comment
+    return None, None, "Specie", -1, None, None, None, None
 
 def apply_styles(row):
     # Check the Validation value and apply color styling to the entire row
@@ -98,37 +99,13 @@ def update_and_highlight_row(audio_table, validation_value, from_audio_selected=
     next_row_index = current_row_index + 1 + row_corrector
 
     # Cambia los colores según el valor de validación
-    if validation_value == 1:  # Validado como especie
-        color = '#63C132'
-    elif validation_value == 2:  # Bird
-        color = '#86b46e'
-    elif validation_value == 0:  # Desconocido
-        color = '#FFA500'
-    elif validation_value == -1:  # Desconocido
-        color = '#B02E0C'
-    elif validation_value == -2:  # Desconocido
-        color = '#D3D3D3'
-    else:
-        color = None
+    if validation_value is not None:
+        audio_table.at[current_row_index, "Validation"] = validation_value
 
-    # Actualizar el diccionario de estilos
-    if color:
-        row_styles[current_row_index] = color
-    elif current_row_index in row_styles:
-        del row_styles[current_row_index]
+    # Aplicar estilos a todas las filas basadas en su valor de validación
+    styled_audio_table = audio_table.style.apply(apply_styles, axis=1)
 
-    def apply_styles(row):
-        styles = []
-        for col in row.index:
-            if row.name == next_row_index:
-                styles.append('border: 2px solid orange')
-            elif row.name in row_styles:
-                styles.append('background-color: {}'.format(row_styles[row.name]))
-            else:
-                styles.append('')
-        return styles
-
-    return audio_table.style.apply(apply_styles, axis=1)
+    return styled_audio_table
 
 def highlight_current_row(audio_table):
     # Create row lines orange style for that row
